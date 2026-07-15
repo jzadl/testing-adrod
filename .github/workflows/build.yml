@@ -1,0 +1,156 @@
+name: Build CyanogenMod 14.1 for Samsung J7 Neo
+
+on:
+  workflow_dispatch:
+    inputs:
+      android_version:
+        description: 'Android version (13.0 for Marshmallow, 14.1 for Nougat)'
+        required: true
+        default: '14.1'
+        type: choice
+        options:
+          - '13.0'
+          - '14.1'
+
+env:
+  DEVICE: j7velte
+  CM_VERSION: ${{ github.event.inputs.android_version || '14.1' }}
+  CM_BRANCH: cm-${{ github.event.inputs.android_version || '14.1' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minuses: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          echo "=== Disk space before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          docker image prune -af
+          echo "=== Disk space after cleanup ==="
+          df -h
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
+            git git-lfs gnupg gperf imagemagick lib32readline-dev lib32z1-dev \
+            libelf-dev liblz4-tool libncurses5 libsdl1.2-dev libssl-dev \
+            libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools \
+            xsltproc zip zlib1g-dev openjdk-8-jdk python3 python3-pip \
+            libtinfo5 libncurses5
+
+      - name: Configure ccache
+        run: |
+          mkdir -p ~/.ccache
+          echo "max_size = 10G" > ~/.ccache/ccache.conf
+          echo "compiler_check = content" >> ~/.ccache/ccache.conf
+
+      - name: Setup repo tool
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Configure git
+        run: |
+          git config --global user.email "ci@cyanogenmod.build"
+          git config --global user.name "CyanogenMod CI"
+          git config --global color.ui false
+
+      - name: Initialize CyanogenMod manifest
+        run: |
+          mkdir -p android/cm
+          cd android/cm
+          repo init -u https://github.com/CyanogenMod/android.git \
+            -b ${{ env.CM_BRANCH }} \
+            --depth=1
+
+      - name: Add custom device manifests
+        run: |
+          mkdir -p android/cm/.repo/local_manifests
+          cat > android/cm/.repo/local_manifests/j7velte.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <manifest>
+            <!-- Kernel -->
+            <project name="samsungexynos7870/android_kernel_samsung_exynos7870"
+                     path="kernel/samsung/exynos7870"
+                     remote="github"
+                     revision="master" />
+            
+            <!-- Device tree -->
+            <project name="samsungexynos7870/android_device_samsung_j7velte"
+                     path="device/samsung/j7velte"
+                     remote="github"
+                     revision="aex" />
+            
+            <!-- Common device tree -->
+            <project name="samsungexynos7870/android_device_samsung_exynos7870-common"
+                     path="device/samsung/exynos7870-common"
+                     remote="github"
+                     revision="aex" />
+            
+            <!-- Vendor blobs -->
+            <project name="samsungexynos7870/proprietary_vendor_samsung"
+                     path="vendor/samsung"
+                     remote="github"
+                     revision="aex" />
+          </manifest>
+          EOF
+
+      - name: Sync source code
+        run: |
+          cd android/cm
+          repo sync -c -j$(nproc --all) \
+            --force-sync \
+            --no-clone-bundle \
+            --no-tags \
+            --optimized-fetch \
+            --prune \
+            --force-remove-dirty
+
+      - name: Setup build environment
+        run: |
+          cd android/cm
+          source build/envsetup.sh
+          echo "BUILD_ENV_SETUP=1" >> $GITHUB_ENV
+
+      - name: Build CyanogenMod
+        run: |
+          cd android/cm
+          source build/envsetup.sh
+          lunch cm_${{ env.DEVICE }}-userdebug
+          mka bacon -j$(nproc --all) 2>&1 | tee build.log
+        env:
+          USE_CCACHE: 1
+          CCACHE_EXEC: /usr/bin/ccache
+          CCACHE_DIR: ~/.ccache
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: cyanogenmod-${{ env.CM_VERSION }}-${{ env.DEVICE }}-${{ github.run_number }}
+          path: |
+            android/cm/out/target/product/${{ env.DEVICE }}/*.zip
+            android/cm/out/target/product/${{ env.DEVICE }}/recovery.img
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload build log on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log-${{ github.run_number }}
+          path: android/cm/build.log
+          retention-days: 7

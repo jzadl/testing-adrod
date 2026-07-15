@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!--
+    CyanogenMod 14.1 Local Manifest for Samsung J7 Neo (j7velte)
+    Place this file in: .repo/local_manifests/j7velte.xml
+    
+    This manifest adds device-specific repositories to the CyanogenMod build.
+    You can customize the branches and paths as needed.
+  -->
+
+  <!-- ============================================ -->
+  <!-- Kernel Source (Linux 3.x)                    -->
+  <!-- ============================================ -->
+  <project name="samsungexynos7870/android_kernel_samsung_exynos7870"
+           path="kernel/samsung/exynos7870"
+           remote="github"
+           revision="master" />
+
+  <!-- ============================================ -->
+  <!-- Device Tree for J7 Neo/Nxt/Core              -->
+  <!-- ============================================ -->
+  <project name="samsungexynos7870/android_device_samsung_j7velte"
+           path="device/samsung/j7velte"
+           remote="github"
+           revision="aex" />
+
+  <!-- ============================================ -->
+  <!-- Common Device Tree for Exynos7870            -->
+  <!-- ============================================ -->
+  <project name="samsungexynos7870/android_device_samsung_exynos7870-common"
+           path="device/samsung/exynos7870-common"
+           remote="github"
+           revision="aex" />
+
+  <!-- ============================================ -->
+  <!-- Vendor Blobs (Proprietary Files)             -->
+  <!-- ============================================ -->
+  <project name="samsungexynos7870/proprietary_vendor_samsung"
+           path="vendor/samsung"
+           remote="github"
+           revision="aex" />
+
+  <!-- ============================================ -->
+  <!-- Samsung Hardware (Opcional)                  -->
+  <!-- ============================================ -->
+  <!--
+  <project name="samsungexynos7870/android_hardware_samsung"
+           path="hardware/samsung"
+           remote="github"
+           revision="aex" />
+  -->
+
+</manifest>
