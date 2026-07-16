@@ -60,6 +60,13 @@ jobs:
           sed -i 's/CONFIG_IKHEADERS=y/# CONFIG_IKHEADERS is not set/' \
             arch/arm64/configs/${{ env.DEVICE }}_defconfig
 
+      - name: Fix source code issues
+        working-directory: kernel
+        run: |
+          # Remove stray #endif after _mtk_charger_change_current_setting
+          sed -i '/_mtk_charger_change_current_setting/{n;/^#endif$/d}' \
+            drivers/power/supply/mediatek/charger/mtk_charger.c
+
       - name: Add swap
         run: |
           sudo swapon --show
@@ -73,6 +80,8 @@ jobs:
 
       - name: Build kernel
         working-directory: kernel
+        continue-on-error: true
+        id: build
         run: |
           export ARCH=arm64
           export SUBARCH=arm64
@@ -85,7 +94,7 @@ jobs:
             LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE="aarch64-linux-gnu-" \
             CROSS_COMPILE_ARM32="arm-linux-gnueabi-" \
-            CLANG_TRIPLE="aarch64-linux-gnu-"
+            CLANG_TRIPLE="aarch64-linux-gnu-" 2>&1 | tee build.log
 
           mkdir -p ../out
           cp out/arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
@@ -103,7 +112,7 @@ jobs:
           retention-days: 30
 
       - name: Create release
-        if: success()
+        if: steps.build.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           name: "Halium Kernel ${{ env.DEVICE }} #${{ github.run_number }}"
@@ -112,3 +121,25 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Telegram on success
+        if: steps.build.outcome == 'success'
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=✅ Selene kernel build #${{ github.run_number }} succeeded!
+        Release: https://github.com/jzadl/testing-adrod/releases/tag/successful.semirelease.selene.${{ github.run_number }}" \
+            -d "parse_mode=Markdown"
+
+      - name: Notify Telegram on failure
+        if: steps.build.outcome == 'failure'
+        run: |
+          LOG_TAIL=$(tail -c 3500 kernel/build.log 2>/dev/null || echo "No log available")
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=❌ Selene kernel build #${{ github.run_number }} failed!
+        Log: https://github.com/jzadl/testing-adrod/actions/runs/${{ github.run_number }}
+        \`\`\`
+        $LOG_TAIL
+        \`\`\`" \
+            -d "parse_mode=Markdown"
