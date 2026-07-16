@@ -50,6 +50,11 @@ jobs:
           ccache -M 10G
           echo "CCACHE_DIR=~/.ccache" >> $GITHUB_ENV
 
+      - name: Configure git identity
+        run: |
+          git config --global user.email "ci@halium.build"
+          git config --global user.name "Halium CI"
+
       - name: Initialize Halium source tree
         run: |
           mkdir -p halium && cd halium
