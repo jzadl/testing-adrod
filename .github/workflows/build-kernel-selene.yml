@@ -29,60 +29,62 @@ jobs:
           sudo apt-get install -y \
             bc bison build-essential flex libssl-dev \
             libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
+            gcc-arm-linux-gnueabi binutils-arm-linux-gnueabi \
             python3 python-is-python3 git cpio ccache \
-            libncurses-dev device-tree-compiler
+            libncurses-dev device-tree-compiler wget
+
+      - name: Install Clang r383902 (AOSP Android 11)
+        run: |
+          mkdir -p $HOME/clang
+          cd $HOME/clang
+          wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-11.0.0_r1/clang-r383902.tar.gz
+          tar -xf clang-r383902.tar.gz
+          echo "$HOME/clang/bin" >> $GITHUB_PATH
 
       - name: Clone kernel source
         run: |
           git clone --depth=1 -b ${{ env.KERNEL_BRANCH }} \
             ${{ env.KERNEL_SOURCE }} kernel
 
-      - name: Fix kernel build issues
+      - name: Apply kernel patches
         working-directory: kernel
         run: |
-          # Fix 1: Disable broken dvfsrc driver (incomplete kernel source)
           sed -i 's/^obj-$(CONFIG_MACH_MT6768)/#obj-$(CONFIG_MACH_MT6768)/' \
             drivers/devfreq/Makefile
 
-          # Fix 2: Disable BLK_INLINE_ENCRYPTION (always_inline GCC compat)
-          sed -i 's/CONFIG_BLK_INLINE_ENCRYPTION=y/# CONFIG_BLK_INLINE_ENCRYPTION is not set/' \
-            arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
-          sed -i 's/CONFIG_BLK_CRYPTO=y/# CONFIG_BLK_CRYPTO is not set/' \
-            arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
-
-          # Fix 3: Disable stackprotector strong (GCC compat)
-          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR=y/' \
-            arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
-
-          # Fix 4: Disable -Werror at kernel level
-          sed -i 's/CFLAGS_KERNEL.*-Werror//' Makefile 2>/dev/null || true
-          sed -i 's/subdir-ccflags-$(CONFIG_MTK_GCOV).*-Werror/subdir-ccflags-$(CONFIG_MTK_GCOV)/' \
-            arch/arm64/Makefile 2>/dev/null || true
-
-          # Fix 5: Create stub firmware for focaltech touchscreen
           mkdir -p include/firmware
           echo "// stub" > include/firmware/fw_sample.i
 
-          # Fix 6: Create wrapper for tools/build/cpio
           mkdir -p tools/build
-          echo '#!/bin/bash' > tools/build/cpio
-          echo 'exec /usr/bin/cpio "$@"' >> tools/build/cpio
+          printf '#!/bin/bash\nexec /usr/bin/cpio "$@"\n' > tools/build/cpio
           chmod +x tools/build/cpio
+
+          sed -i 's|tools/build/cpio|/usr/bin/cpio|g' kernel/gen_kheaders.sh 2>/dev/null || true
 
       - name: Build kernel
         working-directory: kernel
         run: |
           export ARCH=arm64
           export SUBARCH=arm64
+          export CC=clang
+          export HOSTCC=clang
+          export CLANG_TRIPLE=aarch64-linux-gnu-
           export CROSS_COMPILE=aarch64-linux-gnu-
+          export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+          export LD=ld.lld
+          export AR=llvm-ar
+          export NM=llvm-nm
+          export OBJCOPY=llvm-objcopy
+          export OBJDUMP=llvm-objdump
+          export STRIP=llvm-strip
 
-          make ${{ env.DEVICE }}_defconfig
-          make -j$(nproc --all)
+          make O=out ${{ env.DEVICE }}_defconfig
+          make O=out -j$(nproc --all)
 
           mkdir -p ../out
-          cp arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
-          cp arch/arm64/boot/Image.gz ../out/ 2>/dev/null || \
-          cp arch/arm64/boot/Image ../out/
+          cp out/arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
+          cp out/arch/arm64/boot/Image.gz ../out/ 2>/dev/null || \
+          cp out/arch/arm64/boot/Image ../out/
 
           echo "=== Kernel build complete ==="
           ls -la ../out/
