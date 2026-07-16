@@ -45,6 +45,10 @@ jobs:
           sed -i '/ccflags-y += -I.*drivers\/misc\/mediatek\/include\//a ccflags-y += -I$(srctree)/drivers/devfreq/' \
             drivers/devfreq/Makefile
 
+          # Fix 3: Disable broken dvfsrc driver (missing register definitions in incomplete kernel source)
+          sed -i 's/^obj-$(CONFIG_MACH_MT6768)/#obj-$(CONFIG_MACH_MT6768)/' \
+            drivers/devfreq/Makefile
+
       - name: Build kernel
         working-directory: kernel
         run: |
