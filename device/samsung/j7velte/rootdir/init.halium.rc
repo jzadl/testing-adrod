@@ -1,0 +1,51 @@
+# init.halium.rc - Halium init script for Samsung Galaxy J7 Neo (j7velte)
+
+on post-fs
+    # Mount tmpfs
+    mount tmpfs tmpfs /mnt/standalone nodev noexec nosuid
+
+    # Symlink the firmware path for bcmdhd
+    symlink /vendor/etc/firmware /etc/firmware
+
+on boot
+    # Wi-Fi
+    chown wifi wifi /sys/module/bcmdhd/parameters/firmware_path
+    chown wifi wifi /sys/module/bcmdhd/parameters/dhd_rxf_lt
+    chown wifi wifi /proc/net/ebt_brcm
+
+    # Audio
+    chown root audio /sys/class/misc/mixer/control/cmd64
+    chown root audio /proc/asound/card0/codec#0/reg
+    chown root audio /proc/asound/card0/codec#0/verb_write
+
+    # Bluetooth
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+
+    # GPS
+    chown gps gps /sys/class/sensors/geo/mag_state
+    chown gps gps /sys/class/sensors/geo/gps_state
+
+    # Permissions for HAL interfaces
+    chmod 0664 /sys/class/sensors/geo/mag_state
+    chmod 0664 /sys/class/sensors/geo/gps_state
+
+on property:sys.boot_completed=1
+    # Restart HIDL HAL services on boot completion
+    restart vendor.audio-hal-2-0
+    restart vendor.bluetooth@1.0-service
+    restart vendor.camera-provider@2.4-service
+    restart vendor.graphics.allocator@2.0-service
+    restart vendor.graphics.composer@2.1-service
+    restart vendor.health@2.0-service
+    restart vendor.light@2.0-service
+    restart vendor.nfc@1.0-service
+    restart vendor.power@1.0-service
+    restart vendor.sensors@1.0-service
+    restart vendor.vibrator@1.0-service
+    restart vendor.wifi@1.0-service
+
+service halium-late-init /system/bin/sh /vendor/etc/init/halium_late_init.sh
+    class late_start
+    user root
+    group root
+    oneshot

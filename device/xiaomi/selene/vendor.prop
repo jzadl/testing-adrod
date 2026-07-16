@@ -1,0 +1,56 @@
+# Vendor properties for Xiaomi Redmi 10 2022 (selene) - Halium 9.0
+
+# ADB
+persist.sys.usb.config=adb
+persist.sys.adb.secure=1
+persist.service.adb.enable=1
+persist.sys.dalvik.vm.lib.2=libart.so
+
+# Bluetooth
+persist.bluetooth.bluetooth_scan=true
+persist.bluetooth.enable_split_a2dp=true
+ro.bluetooth.hfp_ver=1.6
+ro.bluetooth.av_remote_passthrough=true
+persist.vendor.btstack.enable.lpa=true
+persist.vendor.btstack.enable.twsplus=true
+
+# Radio
+persist.vendor.radio.apm_sim_not_pwdn=1
+persist.vendor.radio.data_con_rprt=1
+persist.vendor.radio.force_on_dc=true
+persist.vendor.radio.mux_report_for_ecc=1
+persist.vendor.radio.ril_on_data=1
+persist.vendor.radio.apm_sim_not_pwdn=1
+telephony.lteOnCdmaDevice=1
+ro.telephony.default_network=9,0
+
+# Sensors
+persist.vendor.sensor.multisync=1
+persist.vendor.sensor.facing=0
+
+# Display
+persist.vendor.display.color_safe=true
+ro.vendor.display.config.default_fps=60
+ro.vendor.display.feature=1
+
+# Thermal
+persist.vendor.thermal.bgtn.th=73000
+
+# Camera
+camera.disable_zsl_mode=1
+
+# Audio
+persist.vendor.audio.fluence.mode=endfire
+persist.vendor.audio.fluence.speakermode=fluence
+persist.vendor.audio.fluence.voicecall=true
+persist.vendor.audio.fluence.voicerec=false
+persist.vendor.audio.mtk_afe_support=1
+ro.vendor.audio.mediatek_support=1
+ro.vendor.audio.sfx.earadj=true
+
+# Codec
+media.stagefright.low-latency=1
+
+# MTK
+ro.vendor.mediatek.version.release=alps-mp-r0.mp2.V1.0
+persist.vendor.mtk_ct_volte_support=1

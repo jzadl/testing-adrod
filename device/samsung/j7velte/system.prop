@@ -1,0 +1,47 @@
+# System properties for Samsung Galaxy J7 Neo (j7velte) - Halium 9.0
+
+# Display
+ro.sf.lcd_density=400
+ro.sf.hwrotation=0
+persist.sys.sf.native_mode=1
+ro.config.ringtone=Over_the_horizon.ogg
+ro.config.notification_sound=S_Original.ogg
+
+# Dalvik / ART
+dalvik.vm.heapsize=256m
+dalvik.vm.heapgrowthlimit=128m
+dalvik.vm.dex2oat-threads=4
+dalvik.vm.image-dex2oat-threads=4
+dalvik.vm.isa.arm.variant=cortex-a53
+dalvik.vm.isa.arm64.variant=cortex-a53
+dalvik.vm.isa.arm.features=div,thumb-2
+dalvik.vm.isa.arm64.features=div
+
+# Hardware
+ro.hardware=j7velte
+ro.product.board=j7velte
+ro.board.platform=exynos7870
+
+# Camera
+camera2.portability.force_en=true
+persist.camera.HAL3.enabled=1
+
+# Audio
+audio.offload.disable=true
+audio.deep_buffer.media=false
+
+# Connectivity
+wifi.interface=wlan0
+ro.nfc.port=NCI
+
+# RIL
+rild.libpath=/vendor/lib64/libsec-ril.so
+ro.telephony.default_network=9
+
+# Graphics
+debug.hwui.renderer=skiagl
+ro.hardware.egl=mesa
+
+# Misc
+ro.vendor.build.security_patch=2019-05-01
+persist.sys.dalvik.vm.lib.2=libart.so
