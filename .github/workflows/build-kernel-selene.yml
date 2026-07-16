@@ -34,6 +34,17 @@ jobs:
           git clone --depth=1 -b ${{ env.KERNEL_BRANCH }} \
             ${{ env.KERNEL_SOURCE }} kernel
 
+      - name: Fix kernel build issues
+        working-directory: kernel
+        run: |
+          # Fix 1: helio-dvfsrc-ipi.c uses angle brackets for local header
+          sed -i 's/#include <helio-dvfsrc-ipi.h>/#include "helio-dvfsrc-ipi.h"/' \
+            drivers/devfreq/helio-dvfsrc-ipi.c
+
+          # Fix 2: helio-dvfsrc-v2 files can't find parent devfreq/governor.h
+          sed -i '/ccflags-y += -I.*drivers\/misc\/mediatek\/include\//a ccflags-y += -I$(srctree)/drivers/devfreq/' \
+            drivers/devfreq/Makefile
+
       - name: Build kernel
         working-directory: kernel
         run: |
