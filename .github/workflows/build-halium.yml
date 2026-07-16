@@ -143,7 +143,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Halium ${{ env.DEVICE }} #${{ github.run_number }}"
-          tag_name: "halium-${{ env.DEVICE }}-r${{ github.run_number }}"
+          tag_name: "successful.release.${{ github.run_number }}"
           files: out/*
           make_latest: true
         env:
