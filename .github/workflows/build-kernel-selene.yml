@@ -1,0 +1,60 @@
+name: Build Halium Kernel for Selene (Redmi 10 2022)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - halium-selene
+
+env:
+  DEVICE: selene
+  KERNEL_SOURCE: https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git
+  KERNEL_BRANCH: selene-r-oss
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential flex libssl-dev \
+            libelf-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
+            python3 python-is-python3 git cpio ccache \
+            libncurses-dev device-tree-compiler
+
+      - name: Clone kernel source
+        run: |
+          git clone --depth=1 -b ${{ env.KERNEL_BRANCH }} \
+            ${{ env.KERNEL_SOURCE }} kernel
+
+      - name: Build kernel
+        working-directory: kernel
+        run: |
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+
+          make ${{ env.DEVICE }}_defconfig
+          make -j$(nproc --all)
+
+          mkdir -p ../out
+          cp arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
+          cp arch/arm64/boot/Image.gz ../out/ 2>/dev/null || \
+          cp arch/arm64/boot/Image ../out/
+
+          echo "=== Kernel build complete ==="
+          ls -la ../out/
+
+      - name: Upload kernel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: halium-kernel-${{ env.DEVICE }}-${{ github.run_number }}
+          path: out/
+          retention-days: 30
