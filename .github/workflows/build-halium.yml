@@ -14,6 +14,9 @@ env:
   VENDOR: samsung
   LUNCH_COMBO: halium_j7velte-userdebug
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04

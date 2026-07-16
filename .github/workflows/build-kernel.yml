@@ -11,6 +11,9 @@ env:
   KERNEL_SOURCE: https://github.com/halium-exynos/android_kernel_samsung_exynos7870.git
   KERNEL_BRANCH: halium-9.0
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04
