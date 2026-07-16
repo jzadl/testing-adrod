@@ -11,6 +11,9 @@ env:
   KERNEL_SOURCE: https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git
   KERNEL_BRANCH: selene-r-oss
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04
