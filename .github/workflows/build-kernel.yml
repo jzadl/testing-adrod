@@ -41,9 +41,11 @@ jobs:
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+          export HOSTCFLAGS="-fcommon"
+          export ANDROID_MAJOR_VERSION=p
 
           make ${{ env.DEVICE }}_defconfig
-          make -j$(nproc --all)
+          make -j$(nproc --all) HOSTCFLAGS="-fcommon"
 
           # Copy output
           mkdir -p ../out
