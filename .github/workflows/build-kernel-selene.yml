@@ -49,17 +49,34 @@ jobs:
       - name: Apply kernel patches
         working-directory: kernel
         run: |
+          # Disable broken dvfsrc driver
           sed -i 's/^obj-$(CONFIG_MACH_MT6768)/#obj-$(CONFIG_MACH_MT6768)/' \
             drivers/devfreq/Makefile
 
+          # Create stub firmware for focaltech
           mkdir -p include/firmware
           echo "// stub" > include/firmware/fw_sample.i
 
+          # Disable problematic configs in defconfig
+          sed -i 's/CONFIG_BLK_INLINE_ENCRYPTION=y/# CONFIG_BLK_INLINE_ENCRYPTION is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          sed -i 's/CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK=y/# CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          sed -i 's/CONFIG_IKHEADERS=m/# CONFIG_IKHEADERS is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR=y/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+
+          # Patch always_inline errors in blk-crypto headers
+          sed -i 's/inline void ksm_flock/static inline void ksm_flock/' \
+            include/linux/keyslot-manager.h 2>/dev/null || true
+          sed -i 's/inline void blk_crypto_flock/static inline void blk_crypto_flock/' \
+            include/linux/blk-crypto.h 2>/dev/null || true
+
+          # Fix cpio path for kheaders
           mkdir -p tools/build
           printf '#!/bin/bash\nexec /usr/bin/cpio "$@"\n' > tools/build/cpio
           chmod +x tools/build/cpio
-
-          sed -i 's|tools/build/cpio|/usr/bin/cpio|g' kernel/gen_kheaders.sh 2>/dev/null || true
 
       - name: Build kernel
         working-directory: kernel
