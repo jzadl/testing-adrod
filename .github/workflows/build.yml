@@ -189,8 +189,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: success()
         with:
-          tag_name: cm-${{ env.CM_VERSION }}-${{ env.DEVICE }}-build${{ github.run_number }}
-          name: CyanogenMod ${{ env.CM_VERSION }} for ${{ env.DEVICE }} (#${{ github.run_number }})
+          tag_name: successful.release.${{ github.run_number }}
+          name: CyanogenMod 14.1 for ${{ env.DEVICE }} (#${{ github.run_number }})
           body: |
             Automated CyanogenMod 14.1 build for the Samsung J7 Neo (${{ env.DEVICE }}).
             - Build Number: ${{ github.run_number }}
