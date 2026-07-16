@@ -33,21 +33,32 @@ jobs:
             python3 python-is-python3 git cpio ccache \
             libncurses-dev device-tree-compiler wget
 
-      - name: Install AOSP Clang + GCC 4.9 cross-compilers
+      - name: Install Clang r596125
         run: |
-          mkdir -p $HOME/toolchain
-          cd $HOME/toolchain
-          git clone --depth=1 https://github.com/TeraaBytee/google-clang aosp_clang
-          git clone --depth=1 https://github.com/TeraaBytee/aarch64-linux-android-4.9 gcc64
-          git clone --depth=1 https://github.com/TeraaBytee/arm-linux-androideabi-4.9 gcc32
-          echo "$HOME/toolchain/aosp_clang/bin" >> $GITHUB_PATH
-          echo "$HOME/toolchain/gcc64/bin" >> $GITHUB_PATH
-          echo "$HOME/toolchain/gcc32/bin" >> $GITHUB_PATH
+          mkdir -p $HOME/clang
+          cd $HOME/clang
+          wget -q -O clang.tar.gz \
+            https://github.com/MrShockWAVEog/Google-Clang-Mirror/releases/download/clang-r596125-aosp/clang.tar.gz
+          tar -xf clang.tar.gz
+          rm clang.tar.gz
+          echo "$HOME/clang/bin" >> $GITHUB_PATH
 
       - name: Clone kernel source
         run: |
           git clone --depth=1 -b ${{ env.KERNEL_BRANCH }} \
             ${{ env.KERNEL_SOURCE }} kernel
+
+      - name: Fix defconfig
+        working-directory: kernel
+        run: |
+          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR=y/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          sed -i 's/CONFIG_BLK_INLINE_ENCRYPTION=y/# CONFIG_BLK_INLINE_ENCRYPTION is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          sed -i 's/CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK=y/# CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          sed -i 's/CONFIG_IKHEADERS=y/# CONFIG_IKHEADERS is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig
 
       - name: Build kernel
         working-directory: kernel
@@ -60,12 +71,10 @@ jobs:
           make O=out ${{ env.DEVICE }}_defconfig
 
           make -j$(nproc --all) O=out \
-            CROSS_COMPILE="aarch64-linux-android-" \
-            CROSS_COMPILE_ARM32="arm-linux-androideabi-" \
-            CROSS_COMPILE_COMPAT="arm-linux-androideabi-" \
-            CLANG_TRIPLE="aarch64-linux-gnu-" \
-            CC=clang \
-            LD=ld.lld
+            LLVM=1 LLVM_IAS=1 \
+            CROSS_COMPILE="aarch64-linux-gnu-" \
+            CROSS_COMPILE_ARM32="arm-linux-gnueabi-" \
+            CLANG_TRIPLE="aarch64-linux-gnu-"
 
           mkdir -p ../out
           cp out/arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
