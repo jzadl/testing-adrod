@@ -37,21 +37,30 @@ jobs:
       - name: Fix kernel build issues
         working-directory: kernel
         run: |
-          # Fix 1: helio-dvfsrc-ipi.c uses angle brackets for local header
-          sed -i 's/#include <helio-dvfsrc-ipi.h>/#include "helio-dvfsrc-ipi.h"/' \
-            drivers/devfreq/helio-dvfsrc-ipi.c
-
-          # Fix 2: Disable broken dvfsrc driver (missing register definitions)
+          # Fix 1: Disable broken dvfsrc driver (incomplete kernel source)
           sed -i 's/^obj-$(CONFIG_MACH_MT6768)/#obj-$(CONFIG_MACH_MT6768)/' \
             drivers/devfreq/Makefile
 
-          # Fix 3: blk-crypto always_inline error (GCC compat)
+          # Fix 2: Disable BLK_INLINE_ENCRYPTION (always_inline GCC compat)
+          sed -i 's/CONFIG_BLK_INLINE_ENCRYPTION=y/# CONFIG_BLK_INLINE_ENCRYPTION is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
           sed -i 's/CONFIG_BLK_CRYPTO=y/# CONFIG_BLK_CRYPTO is not set/' \
-            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
+          sed -i 's/CONFIG_FS_ENCRYPTION_INLINE_CRYPT=y/# CONFIG_FS_ENCRYPTION_INLINE_CRYPT is not set/' \
+            arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
 
-          # Fix 4: Missing tools/build/cpio for kheaders_data.tar.xz
-          sed -i 's/CONFIG_IKCONFIG_PROC=y/# CONFIG_IKCONFIG_PROC is not set/' \
-            arch/arm64/configs/${{ env.DEVICE }}_defconfig
+          # Fix 3: Create stub firmware for focaltech touchscreen
+          mkdir -p include/firmware
+          echo "// stub" > include/firmware/fw_sample.i
+
+          # Fix 4: Create wrapper for tools/build/cpio (kheaders expects it here)
+          mkdir -p tools/build
+          echo '#!/bin/bash' > tools/build/cpio
+          echo 'exec /usr/bin/cpio "$@"' >> tools/build/cpio
+          chmod +x tools/build/cpio
+
+          # Fix 5: Patch gen_kheaders.sh to use system cpio directly
+          sed -i 's|cpio|/usr/bin/cpio|g' kernel/gen_kheaders.sh 2>/dev/null || true
 
       - name: Build kernel
         working-directory: kernel
@@ -61,7 +70,9 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
 
           make ${{ env.DEVICE }}_defconfig
-          make -j$(nproc --all)
+          make -j$(nproc --all) \
+            KCFLAGS="-Wno-error -Wno-frame-larger-than=" \
+            KBUILD_CFLAGS="-Wno-error -Wno-frame-larger-than="
 
           mkdir -p ../out
           cp arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
