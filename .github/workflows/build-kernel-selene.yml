@@ -83,7 +83,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Halium Kernel ${{ env.DEVICE }} #${{ github.run_number }}"
-          tag_name: "kernel-${{ env.DEVICE }}-r${{ github.run_number }}"
+          tag_name: "successful.semirelease.selene.${{ github.run_number }}"
           files: out/*
           make_latest: true
         env:
