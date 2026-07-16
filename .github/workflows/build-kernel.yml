@@ -43,9 +43,10 @@ jobs:
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
           export HOSTCFLAGS="-fcommon"
           export ANDROID_MAJOR_VERSION=p
+          export ANDROID_VERSION=90000
 
           make ${{ env.DEVICE }}_defconfig
-          make -j$(nproc --all) HOSTCFLAGS="-fcommon"
+          make -j$(nproc --all) HOSTCFLAGS="-fcommon" ANDROID_VERSION=90000
 
           # Copy output
           mkdir -p ../out
