@@ -129,3 +129,14 @@ jobs:
           name: halium-${{ env.DEVICE }}-${{ github.run_number }}
           path: out/
           retention-days: 30
+
+      - name: Create release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Halium ${{ env.DEVICE }} #${{ github.run_number }}"
+          tag_name: "halium-${{ env.DEVICE }}-r${{ github.run_number }}"
+          files: out/*
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
