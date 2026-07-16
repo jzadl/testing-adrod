@@ -49,21 +49,25 @@ jobs:
             arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
           sed -i 's/CONFIG_BLK_CRYPTO=y/# CONFIG_BLK_CRYPTO is not set/' \
             arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
-          sed -i 's/CONFIG_FS_ENCRYPTION_INLINE_CRYPT=y/# CONFIG_FS_ENCRYPTION_INLINE_CRYPT is not set/' \
+
+          # Fix 3: Disable stackprotector strong (GCC compat)
+          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR=y/' \
             arch/arm64/configs/${{ env.DEVICE }}_defconfig 2>/dev/null || true
 
-          # Fix 3: Create stub firmware for focaltech touchscreen
+          # Fix 4: Disable -Werror at kernel level
+          sed -i 's/CFLAGS_KERNEL.*-Werror//' Makefile 2>/dev/null || true
+          sed -i 's/subdir-ccflags-$(CONFIG_MTK_GCOV).*-Werror/subdir-ccflags-$(CONFIG_MTK_GCOV)/' \
+            arch/arm64/Makefile 2>/dev/null || true
+
+          # Fix 5: Create stub firmware for focaltech touchscreen
           mkdir -p include/firmware
           echo "// stub" > include/firmware/fw_sample.i
 
-          # Fix 4: Create wrapper for tools/build/cpio (kheaders expects it here)
+          # Fix 6: Create wrapper for tools/build/cpio
           mkdir -p tools/build
           echo '#!/bin/bash' > tools/build/cpio
           echo 'exec /usr/bin/cpio "$@"' >> tools/build/cpio
           chmod +x tools/build/cpio
-
-          # Fix 5: Patch gen_kheaders.sh to use system cpio directly
-          sed -i 's|cpio|/usr/bin/cpio|g' kernel/gen_kheaders.sh 2>/dev/null || true
 
       - name: Build kernel
         working-directory: kernel
@@ -73,9 +77,7 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
 
           make ${{ env.DEVICE }}_defconfig
-          make -j$(nproc --all) \
-            KCFLAGS="-Wno-error -Wno-frame-larger-than=" \
-            KBUILD_CFLAGS="-Wno-error -Wno-frame-larger-than="
+          make -j$(nproc --all)
 
           mkdir -p ../out
           cp arch/arm64/boot/Image.gz-dtb ../out/ 2>/dev/null || \
