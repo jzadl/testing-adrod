@@ -60,6 +60,13 @@ jobs:
           sed -i 's/CONFIG_IKHEADERS=y/# CONFIG_IKHEADERS is not set/' \
             arch/arm64/configs/${{ env.DEVICE }}_defconfig
 
+      - name: Add swap
+        run: |
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
       - name: Build kernel
         working-directory: kernel
         run: |
@@ -70,7 +77,7 @@ jobs:
 
           make O=out ${{ env.DEVICE }}_defconfig
 
-          make -j$(nproc --all) O=out \
+          make -j2 O=out \
             LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE="aarch64-linux-gnu-" \
             CROSS_COMPILE_ARM32="arm-linux-gnueabi-" \
