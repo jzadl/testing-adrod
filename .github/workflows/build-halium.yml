@@ -50,6 +50,22 @@ jobs:
           ccache -M 10G
           echo "CCACHE_DIR=~/.ccache" >> $GITHUB_ENV
 
+      - name: Configure git identity
+        run: |
+          git config --global user.email "ci@halium.build"
+          git config --global user.name "Halium CI"
+
+      - name: Add swap
+        run: |
+          sudo swapon --show
+          if ! swapon --show | grep -q /swapfile; then
+            sudo dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+          fi
+          free -h
+
       - name: Initialize Halium source tree
         run: |
           mkdir -p halium && cd halium
@@ -107,7 +123,7 @@ jobs:
           lunch ${{ env.LUNCH_COMBO }}
           export USE_CCACHE=1
           export CCACHE_DIR=~/.ccache
-          make halium-boot -j$(nproc --all)
+          make halium-boot -j2
 
       - name: Build system image
         working-directory: halium
@@ -116,7 +132,7 @@ jobs:
           lunch ${{ env.LUNCH_COMBO }}
           export USE_CCACHE=1
           export CCACHE_DIR=~/.ccache
-          mka systemimage -j$(nproc --all)
+          mka systemimage -j2
 
       - name: Collect output
         working-directory: halium
