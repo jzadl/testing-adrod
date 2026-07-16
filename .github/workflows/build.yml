@@ -1,4 +1,4 @@
-name: Build AEX for Samsung J7 Neo
+name: Build CyanogenMod 14.1 for Samsung J7 Neo
 
 on:
   workflow_dispatch:
@@ -6,14 +6,15 @@ on:
       android_version:
         description: 'Android version'
         required: true
-        default: '9'
+        default: '14.1'
         type: choice
         options:
-          - '9'
+          - '14.1'
 
 env:
   DEVICE: j7velte
-  ROM_VERSION: AEX-9.0
+  CM_VERSION: 14.1
+  CM_BRANCH: cm-14.1
 
 jobs:
   build:
@@ -75,83 +76,73 @@ jobs:
 
       - name: Configure git
         run: |
-          git config --global user.email "ci@aex.build"
-          git config --global user.name "AEX CI"
+          git config --global user.email "ci@cyanogenmod.build"
+          git config --global user.name "CyanogenMod CI"
           git config --global color.ui false
 
-      - name: Initialize AEX manifest
+      - name: Initialize CyanogenMod manifest
         run: |
-          mkdir -p android
-          cd android
-          repo init -u https://github.com/AospExtended/manifest.git \
-            -b 9.x \
+          mkdir -p android/cm
+          cd android/cm
+          repo init -u https://github.com/CyanogenMod/android.git \
+            -b cm-14.1 \
             --depth=1
 
       - name: Add custom device manifests
         run: |
-          mkdir -p android/.repo/local_manifests
-          cat > android/.repo/local_manifests/j7velte.xml << 'MANIFEST_EOF'
+          mkdir -p android/cm/.repo/local_manifests
+          cat > android/cm/.repo/local_manifests/j7velte.xml << 'MANIFEST_EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <manifest>
-            <!-- Device tree -->
-            <project name="samsungexynos7870/android_device_samsung_j7velte"
+
+            <!-- Device tree (the only one with cm-14.1 branch) -->
+            <project name="J0SH1X/android_device_samsung_j7velte"
                      path="device/samsung/j7velte"
                      remote="github"
-                     revision="aex" />
+                     revision="cm-14.1" />
 
-            <!-- Common device tree -->
-            <project name="samsungexynos7870/android_device_samsung_universal7870-common"
-                     path="device/samsung/universal7870-common"
-                     remote="github"
-                     revision="aex" />
-
-            <!-- Kernel -->
+            <!-- Kernel (use samsungexynos7870 kernel, map to j7velte path) -->
             <project name="samsungexynos7870/android_kernel_samsung_exynos7870"
-                     path="kernel/samsung/exynos7870"
+                     path="kernel/samsung/j7velte"
                      remote="github"
                      revision="master" />
 
-            <!-- Vendor blobs - device specific -->
+            <!-- Hardware - Samsung (CyanogenMod repos with cm-14.1) -->
+            <project name="CyanogenMod/android_hardware_samsung"
+                     path="hardware/samsung"
+                     remote="github"
+                     revision="cm-14.1" />
+
+            <!-- Hardware - Samsung SLSI Exynos (cm-14.1) -->
+            <project name="CyanogenMod/android_hardware_samsung_slsi-cm_exynos"
+                     path="hardware/samsung_slsi-cm/exynos"
+                     remote="github"
+                     revision="cm-14.1" />
+
+            <!-- Hardware - Samsung SLSI Exynos5 (cm-14.1) -->
+            <project name="CyanogenMod/android_hardware_samsung_slsi-cm_exynos5"
+                     path="hardware/samsung_slsi-cm/exynos5"
+                     remote="github"
+                     revision="cm-14.1" />
+
+            <!-- Hardware - Samsung SLSI OpenMAX (cm-14.1) -->
+            <project name="CyanogenMod/android_hardware_samsung_slsi-cm_openmax"
+                     path="hardware/samsung_slsi-cm/openmax"
+                     remote="github"
+                     revision="cm-14.1" />
+
+            <!-- Vendor blobs - device specific (may need adaptation) -->
             <project name="samsungexynos7870/android_vendor_samsung_j7velte"
                      path="vendor/samsung/j7velte"
                      remote="github"
                      revision="common" />
 
-            <!-- Vendor blobs - common -->
-            <project name="samsungexynos7870/android_vendor_samsung_universal7870-common"
-                     path="vendor/samsung/universal7870-common"
-                     remote="github"
-                     revision="common" />
-
-            <!-- Hardware - Samsung -->
-            <project name="samsungexynos7870/android_hardware_samsung"
-                     path="hardware/samsung"
-                     remote="github"
-                     revision="lineage-17.1" />
-
-            <!-- Hardware - Samsung SLSI Exynos -->
-            <project name="samsungexynos7870/android_hardware_samsung_slsi_exynos"
-                     path="hardware/samsung_slsi/exynos"
-                     remote="github"
-                     revision="lineage-17.1" />
-
-            <!-- Hardware - Samsung SLSI Exynos7870 -->
-            <project name="samsungexynos7870/android_hardware_samsung_slsi_exynos7870"
-                     path="hardware/samsung_slsi/exynos7870"
-                     remote="github"
-                     revision="lineage-17.1" />
-
-            <!-- Samsung OpenMAX -->
-            <project name="samsungexynos7870/android_hardware_samsung_slsi_openmax"
-                     path="hardware/samsung_slsi/openmax"
-                     remote="github"
-                     revision="lineage-17.1" />
           </manifest>
           MANIFEST_EOF
 
       - name: Sync source code
         run: |
-          cd android
+          cd android/cm
           repo sync -c -j$(nproc --all) \
             --force-sync \
             --no-clone-bundle \
@@ -160,19 +151,28 @@ jobs:
             --prune \
             --force-remove-dirty
 
+      - name: Fix kernel defconfig
+        run: |
+          cd android/cm
+          if [ ! -f kernel/samsung/j7velte/arch/arm64/configs/lineage-j7velte_defconfig ]; then
+            echo "lineage-j7velte_defconfig not found, creating from defconfig"
+            cp kernel/samsung/j7velte/arch/arm64/configs/defconfig kernel/samsung/j7velte/arch/arm64/configs/lineage-j7velte_defconfig
+          fi
+
       - name: Setup build environment
         run: |
-          cd android
+          cd android/cm
           source build/envsetup.sh
           echo "BUILD_ENV_SETUP=1" >> $GITHUB_ENV
 
-      - name: Build AEX
+      - name: Build CyanogenMod
         run: |
-          cd android
+          cd android/cm
           export LC_ALL=C
+          export WITHOUT_CHECK_API=true
           source build/envsetup.sh
-          lunch aosp_${{ env.DEVICE }}-userdebug
-          make bacon -j$(nproc --all) 2>&1 | tee build.log
+          lunch cm_${{ env.DEVICE }}-userdebug
+          mka bacon -j$(nproc --all) 2>&1 | tee build.log
         env:
           USE_CCACHE: 1
           CCACHE_EXEC: /usr/bin/ccache
@@ -182,17 +182,17 @@ jobs:
         if: success()
         run: |
           mkdir -p release_assets
-          cp android/out/target/product/${{ env.DEVICE }}/*.zip release_assets/ 2>/dev/null || true
-          cp android/out/target/product/${{ env.DEVICE }}/recovery.img release_assets/ 2>/dev/null || true
+          cp android/cm/out/target/product/${{ env.DEVICE }}/*.zip release_assets/ 2>/dev/null || true
+          cp android/cm/out/target/product/${{ env.DEVICE }}/recovery.img release_assets/ 2>/dev/null || true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: success()
         with:
-          tag_name: aex-${{ env.DEVICE }}-build${{ github.run_number }}
-          name: AEX 9.0 for ${{ env.DEVICE }} (#${{ github.run_number }})
+          tag_name: cm-${{ env.CM_VERSION }}-${{ env.DEVICE }}-build${{ github.run_number }}
+          name: CyanogenMod ${{ env.CM_VERSION }} for ${{ env.DEVICE }} (#${{ github.run_number }})
           body: |
-            Automated AEX (Android 9) build for the Samsung J7 Neo (${{ env.DEVICE }}).
+            Automated CyanogenMod 14.1 build for the Samsung J7 Neo (${{ env.DEVICE }}).
             - Build Number: ${{ github.run_number }}
             - Commit Reference: ${{ github.sha }}
           draft: false
@@ -205,5 +205,5 @@ jobs:
         if: failure()
         with:
           name: build-log-${{ github.run_number }}
-          path: android/build.log
+          path: android/cm/build.log
           retention-days: 7
