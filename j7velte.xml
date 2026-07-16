@@ -1,53 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <!--
-    CyanogenMod 14.1 Local Manifest for Samsung J7 Neo (j7velte)
+    AEX Local Manifest for Samsung J7 Neo (j7velte)
     Place this file in: .repo/local_manifests/j7velte.xml
-    
-    This manifest adds device-specific repositories to the CyanogenMod build.
-    You can customize the branches and paths as needed.
   -->
 
-  <!-- ============================================ -->
-  <!-- Kernel Source (Linux 3.x)                    -->
-  <!-- ============================================ -->
-  <project name="samsungexynos7870/android_kernel_samsung_exynos7870"
-           path="kernel/samsung/exynos7870"
-           remote="github"
-           revision="master" />
-
-  <!-- ============================================ -->
-  <!-- Device Tree for J7 Neo/Nxt/Core              -->
-  <!-- ============================================ -->
+  <!-- Device tree -->
   <project name="samsungexynos7870/android_device_samsung_j7velte"
            path="device/samsung/j7velte"
            remote="github"
            revision="aex" />
 
-  <!-- ============================================ -->
-  <!-- Common Device Tree for Exynos7870            -->
-  <!-- ============================================ -->
-  <project name="samsungexynos7870/android_device_samsung_exynos7870-common"
-           path="device/samsung/exynos7870-common"
+  <!-- Common device tree -->
+  <project name="samsungexynos7870/android_device_samsung_universal7870-common"
+           path="device/samsung/universal7870-common"
            remote="github"
            revision="aex" />
 
-  <!-- ============================================ -->
-  <!-- Vendor Blobs (Proprietary Files)             -->
-  <!-- ============================================ -->
-  <project name="samsungexynos7870/proprietary_vendor_samsung"
-           path="vendor/samsung"
+  <!-- Kernel -->
+  <project name="samsungexynos7870/android_kernel_samsung_exynos7870"
+           path="kernel/samsung/exynos7870"
            remote="github"
-           revision="aex" />
+           revision="master" />
 
-  <!-- ============================================ -->
-  <!-- Samsung Hardware (Opcional)                  -->
-  <!-- ============================================ -->
-  <!--
+  <!-- Vendor blobs - device specific -->
+  <project name="samsungexynos7870/android_vendor_samsung_j7velte"
+           path="vendor/samsung/j7velte"
+           remote="github"
+           revision="common" />
+
+  <!-- Vendor blobs - common -->
+  <project name="samsungexynos7870/android_vendor_samsung_universal7870-common"
+           path="vendor/samsung/universal7870-common"
+           remote="github"
+           revision="common" />
+
+  <!-- Hardware - Samsung -->
   <project name="samsungexynos7870/android_hardware_samsung"
            path="hardware/samsung"
            remote="github"
-           revision="aex" />
-  -->
+           revision="lineage-17.1" />
+
+  <!-- Hardware - Samsung SLSI Exynos -->
+  <project name="samsungexynos7870/android_hardware_samsung_slsi_exynos"
+           path="hardware/samsung_slsi/exynos"
+           remote="github"
+           revision="lineage-17.1" />
+
+  <!-- Hardware - Samsung SLSI Exynos7870 -->
+  <project name="samsungexynos7870/android_hardware_samsung_slsi_exynos7870"
+           path="hardware/samsung_slsi/exynos7870"
+           remote="github"
+           revision="lineage-17.1" />
+
+  <!-- Samsung OpenMAX -->
+  <project name="samsungexynos7870/android_hardware_samsung_slsi_openmax"
+           path="hardware/samsung_slsi/openmax"
+           remote="github"
+           revision="lineage-17.1" />
 
 </manifest>
