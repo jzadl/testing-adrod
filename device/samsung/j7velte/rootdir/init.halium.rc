@@ -49,3 +49,4 @@ service halium-late-init /system/bin/sh /vendor/etc/init/halium_late_init.sh
     user root
     group root
     oneshot
+
