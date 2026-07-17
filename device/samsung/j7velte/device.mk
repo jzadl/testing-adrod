@@ -2,8 +2,8 @@
 
 $(call inherit-product, $(LOCAL_PATH)/halium_j7velte.mk)
 
-# Inherit from common
-$(call inherit-product, device/samsung/universal7870-common/device-common.mk)
+# Inherit from common (optional)
+$(call inherit-product-if-exists, device/samsung/universal7870-common/device-common.mk)
 
 # Inherit vendor blobs
 $(call inherit-product-if-exists, vendor/samsung/j7velte/j7velte-vendor.mk)
