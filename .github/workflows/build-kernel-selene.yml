@@ -151,36 +151,34 @@ jobs:
 
           CLANG_VER=$(clang --version 2>/dev/null | head -1 || echo "N/A")
 
-          MSG=$(cat <<EOF
-✅ <b>Selene Kernel Build #$RUN</b>
-
-<b>Device:</b> Xiaomi Redmi 10 2022 (selene)
-<b>SoC:</b> MediaTek MT6768 (Helio G88)
-<b>Kernel version:</b> $KVER
-<b>Source:</b> vrdons/android_kernel_xiaomi_mt6768
-<b>Branch:</b> shockwave-selene
-<b>Kernel commit:</b> <code>$K_COMMIT</code>
-<b>Full kernel commit:</b> <code>$K_FULL</code>
-<b>Toolchain:</b> $CLANG_VER
-<b>Defconfig:</b> selene_defconfig
-<b>Build flags:</b> LLVM=1 LLVM_IAS=1 -j2
-
-<b>Image:</b> <code>$IMG</code> ($IMG_SIZE)
-<b>SHA256 (short):</b> <code>$IMG_SHA_SHORT</code>
-<b>SHA256 (full):</b> <code>$IMG_SHA</code>
-
-<b>Release tag:</b> successful.semirelease.selene.$RUN
-<b>Artifact:</b> halium-kernel-selene-$RUN
-
-<b>Repo commit:</b> <code>$SHA_SHORT</code>
-<b>Repo commit (full):</b> <code>$SHA_FULL</code>
-<b>Commit msg:</b> $COMMIT_MSG
-<b>Triggered by:</b> $ACTOR
-<b>Branch:</b> $REF
-
-<a href="https://github.com/$REPO/actions/runs/$RUN_ID">🔗 View run on GitHub</a>
-EOF
-          )
+          printf -v MSG '%s\n' \
+            "✅ <b>Selene Kernel Build #$RUN</b>" \
+            "" \
+            "<b>Device:</b> Xiaomi Redmi 10 2022 (selene)" \
+            "<b>SoC:</b> MediaTek MT6768 (Helio G88)" \
+            "<b>Kernel version:</b> $KVER" \
+            "<b>Source:</b> vrdons/android_kernel_xiaomi_mt6768" \
+            "<b>Branch:</b> shockwave-selene" \
+            "<b>Kernel commit:</b> <code>$K_COMMIT</code>" \
+            "<b>Full kernel commit:</b> <code>$K_FULL</code>" \
+            "<b>Toolchain:</b> $CLANG_VER" \
+            "<b>Defconfig:</b> selene_defconfig" \
+            "<b>Build flags:</b> LLVM=1 LLVM_IAS=1 -j2" \
+            "" \
+            "<b>Image:</b> <code>$IMG</code> ($IMG_SIZE)" \
+            "<b>SHA256 (short):</b> <code>$IMG_SHA_SHORT</code>" \
+            "<b>SHA256 (full):</b> <code>$IMG_SHA</code>" \
+            "" \
+            "<b>Release tag:</b> successful.semirelease.selene.$RUN" \
+            "<b>Artifact:</b> halium-kernel-selene-$RUN" \
+            "" \
+            "<b>Repo commit:</b> <code>$SHA_SHORT</code>" \
+            "<b>Repo commit (full):</b> <code>$SHA_FULL</code>" \
+            "<b>Commit msg:</b> $COMMIT_MSG" \
+            "<b>Triggered by:</b> $ACTOR" \
+            "<b>Branch:</b> $REF" \
+            "" \
+            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">🔗 View run on GitHub</a>"
 
           jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
             '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
@@ -215,29 +213,27 @@ EOF
             ERR="No build log found (build may have failed before compilation)"
           fi
 
-          MSG=$(cat <<EOF
-❌ <b>Selene Kernel Build #$RUN FAILED</b>
-
-<b>Device:</b> Xiaomi Redmi 10 2022 (selene)
-<b>SoC:</b> MediaTek MT6768 (Helio G88)
-<b>Source:</b> vrdons/android_kernel_xiaomi_mt6768
-<b>Branch:</b> shockwave-selene
-<b>Kernel commit:</b> <code>$K_COMMIT</code>
-<b>Full kernel commit:</b> <code>$K_FULL</code>
-<b>Defconfig:</b> selene_defconfig
-<b>Build flags:</b> LLVM=1 LLVM_IAS=1 -j2
-
-<b>Repo commit:</b> <code>$SHA_SHORT</code>
-<b>Commit msg:</b> $COMMIT_MSG
-<b>Triggered by:</b> $ACTOR
-<b>Branch:</b> $REF
-
-<b>Last 25 lines of build.log:</b>
-<pre>$ERR</pre>
-
-<a href="https://github.com/$REPO/actions/runs/$RUN_ID">🔗 View run on GitHub</a>
-EOF
-          )
+          printf -v MSG '%s\n' \
+            "❌ <b>Selene Kernel Build #$RUN FAILED</b>" \
+            "" \
+            "<b>Device:</b> Xiaomi Redmi 10 2022 (selene)" \
+            "<b>SoC:</b> MediaTek MT6768 (Helio G88)" \
+            "<b>Source:</b> vrdons/android_kernel_xiaomi_mt6768" \
+            "<b>Branch:</b> shockwave-selene" \
+            "<b>Kernel commit:</b> <code>$K_COMMIT</code>" \
+            "<b>Full kernel commit:</b> <code>$K_FULL</code>" \
+            "<b>Defconfig:</b> selene_defconfig" \
+            "<b>Build flags:</b> LLVM=1 LLVM_IAS=1 -j2" \
+            "" \
+            "<b>Repo commit:</b> <code>$SHA_SHORT</code>" \
+            "<b>Commit msg:</b> $COMMIT_MSG" \
+            "<b>Triggered by:</b> $ACTOR" \
+            "<b>Branch:</b> $REF" \
+            "" \
+            "<b>Last 25 lines of build.log:</b>" \
+            "<pre>$ERR</pre>" \
+            "" \
+            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">🔗 View run on GitHub</a>"
 
           jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
             '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
