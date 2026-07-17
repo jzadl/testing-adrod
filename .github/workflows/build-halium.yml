@@ -81,6 +81,34 @@ jobs:
           mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}
           cp -r ${{ github.workspace }}/device/${{ env.VENDOR }}/${{ env.DEVICE }}/* \
             device/${{ env.VENDOR }}/${{ env.DEVICE }}/
+          # Copy vendor makefiles
+          mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}
+          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor.mk \
+            vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor-files.mk \
+            vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk \
+            vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+
+      - name: Download and extract vendor blobs
+        working-directory: halium
+        run: |
+          echo "Downloading vendor_a.img from release..."
+          gh release download vendor-blobs-selene --pattern "vendor_a.img" \
+            --dir /tmp/ 2>&1
+          ls -lh /tmp/vendor_a.img
+          # Mount and extract
+          mkdir -p /tmp/vendor_mnt
+          sudo mkdir -p /tmp/vendor_mnt
+          sudo mount -o ro,loop /tmp/vendor_a.img /tmp/vendor_mnt
+          mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
+          sudo cp -a /tmp/vendor_mnt/* vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
+          sudo umount /tmp/vendor_mnt
+          rm /tmp/vendor_a.img
+          echo "Vendor blobs extracted:"
+          du -sh vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download prebuilt kernel from latest release
         working-directory: halium

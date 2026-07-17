@@ -1,11 +1,13 @@
-# Minimal device makefile for Xiaomi Redmi 10 2022 (selene) - Halium 11.0
+# Device makefile for Xiaomi Redmi 10 2022 (selene) - Halium 11.0
 # MediaTek MT6768 (Helio G88)
-# Stripped to bare minimum - no vendor blobs available
 
 # SoC
 PRODUCT_PROPERTY_OVERRIDES += ro.soc.model=MT6768
 
-# Permissions (these come from frameworks/native, always available)
+# Vendor blobs
+$(call inherit-product, vendor/xiaomi/selene/selene-vendor.mk)
+
+# Permissions (framework permissions that are always available)
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/android.hardware.bluetooth.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/android.hardware.bluetooth_le.xml \
