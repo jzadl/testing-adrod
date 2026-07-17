@@ -142,7 +142,7 @@ jobs:
 
           K_COMMIT=$(cd kernel && git rev-parse --short HEAD 2>/dev/null || echo "N/A")
           K_FULL=$(cd kernel && git rev-parse HEAD 2>/dev/null || echo "N/A")
-          KVER=$(cd kernel && make O=out kernelversion 2>/dev/null | tail -1 || echo "N/A")
+          KVER=$(cd kernel && make -s O=out kernelversion 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1 || echo "N/A")
 
           IMG=$(ls out/ 2>/dev/null | head -1 || echo "N/A")
           IMG_SIZE=$(du -h "out/$IMG" 2>/dev/null | cut -f1 || echo "N/A")
