@@ -10,7 +10,7 @@ TARGET_CPU_VARIANT := cortex-a53
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_ABI2 :=
 TARGET_2ND_ARCH := arm
-TARGET_2ND_ARCH_VARIANT := armv7-a-neon
+TARGET_2ND_ARCH_VARIANT := armv8-a
 TARGET_2ND_CPU_VARIANT := cortex-a53
 TARGET_2ND_CPU_ABI := armeabi-v7a
 TARGET_2ND_CPU_ABI2 := armeabi
@@ -18,13 +18,10 @@ TARGET_2ND_CPU_ABI2 := armeabi
 # Vendor
 TARGET_COPY_OUT_VENDOR := vendor
 
-# Kernel
-TARGET_KERNEL_CONFIG := selene_defconfig
-TARGET_KERNEL_VARIANT_CONFIG := kernel_defconfig
-TARGET_KERNEL_ARCH := arm64
-TARGET_KERNEL_HEADER_ARCH := arm64
-TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-linux-android-
-KERNEL_MAKE_FLAGS := PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p
+# Prebuilt kernel (compiled separately via build-kernel-selene workflow)
+TARGET_PREBUILT_KERNEL := device/xiaomi/selene/prebuilt/Image.gz-dtb
+TARGET_NO_KERNEL := false
+BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 
 BOARD_KERNEL_BASE := 0x40000000
 BOARD_KERNEL_PAGESIZE := 4096

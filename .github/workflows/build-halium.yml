@@ -7,6 +7,7 @@ on:
       - halium-selene
     paths:
       - 'device/**'
+      - 'vendor/**'
       - '.github/workflows/build-halium.yml'
 
 env:
@@ -15,7 +16,6 @@ env:
   VENDOR: xiaomi
   LUNCH_COMBO: halium_selene-userdebug
   HALIUM_VERSION: halium-11.0
-  KERNEL_MAKE_FLAGS: PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p
 
 permissions:
   contents: write
@@ -82,12 +82,25 @@ jobs:
           cp -r ${{ github.workspace }}/device/${{ env.VENDOR }}/${{ env.DEVICE }}/* \
             device/${{ env.VENDOR }}/${{ env.DEVICE }}/
 
-      - name: Clone kernel source
+      - name: Download prebuilt kernel from latest release
         working-directory: halium
         run: |
-          git clone --depth=1 -b selene-r-oss \
-            https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git \
-            kernel/xiaomi/selene
+          echo "Downloading prebuilt kernel from latest successful semirelease..."
+          # Find latest successful kernel release tag
+          TAG=$(gh release list --limit=50 2>/dev/null | grep 'successful.semirelease.selene' | head -1 | awk '{print $1}')
+          if [ -z "$TAG" ]; then
+            echo "ERROR: No successful kernel release found. Run the kernel build first."
+            exit 1
+          fi
+          echo "Found release: $TAG"
+          # Download Image.gz-dtb into prebuilt dir
+          mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt
+          gh release download "$TAG" --pattern "Image.gz-dtb" \
+            --dir device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/ 2>&1
+          ls -la device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/
+          echo "Prebuilt kernel ready"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clone MTK sepolicy
         working-directory: halium
@@ -95,11 +108,6 @@ jobs:
           git clone --depth=1 -b eleven \
             https://github.com/PixelExperience/device_mediatek_sepolicy_vndr.git \
             device/mediatek/sepolicy_vndr 2>/dev/null || true
-
-      - name: Fix dtc yylloc
-        working-directory: halium/kernel/xiaomi/selene
-        run: |
-          sed -i 's/YYLTYPE yylloc;/YYLTYPE yylloc;\nYYLTYPE yyerror_yylloc;/' scripts/dtc/dtc-lexer.l 2>/dev/null || true
 
       - name: Apply Hybris patches
         working-directory: halium
@@ -123,6 +131,19 @@ jobs:
           except FileNotFoundError:
               print(f'{path} not found')
           PYEOF
+
+      - name: Fix Soong KERNEL_MAKE_FLAGS variable
+        working-directory: halium
+        run: |
+          SOONG_BP="vendor/lineage/build/soong/Android.bp"
+          if [ -f "$SOONG_BP" ]; then
+            echo "Patching $SOONG_BP to inline KERNEL_MAKE_FLAGS..."
+            sed -i 's/\$(KERNEL_MAKE_FLAGS)/PLATFORM_VERSION=11.0.0 ANDROID_MAJOR_VERSION=r/g' "$SOONG_BP"
+            echo "Patched. Line 31 context:"
+            sed -n '29,33p' "$SOONG_BP"
+          else
+            echo "$SOONG_BP not found, skipping"
+          fi
 
       - name: Setup build environment
         working-directory: halium
@@ -195,8 +216,8 @@ jobs:
             "<b>Device:</b> Xiaomi Redmi 10 2022 (selene)" \
             "<b>SoC:</b> MediaTek MT6768 (Helio G88)" \
             "<b>Halium version:</b> 11.0 (Android 11/R)" \
-            "<b>Kernel:</b> MiCode/Xiaomi_Kernel_OpenSource@selene-r-oss" \
-            "<b>Vendor:</b> selene-devs/android_vendor_xiaomi_selene@lineage-20" \
+            "<b>Kernel:</b> prebuilt Image.gz-dtb (from semirelease)" \
+            "<b>Vendor:</b> minimal stub (no full blobs)" \
             "" \
             "<b>Release tag:</b> successful.release.selene.halium11.$RUN" \
             "<b>Artifact:</b> halium-selene-$RUN" \
