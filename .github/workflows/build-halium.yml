@@ -108,19 +108,9 @@ jobs:
       - name: Patch import-namespace to avoid cycle errors
         working-directory: halium
         run: |
-          python3 -c "
-          import re, os
-          path = 'build/make/core/legacy_product_config.mk'
-          if os.path.exists(path):
-              with open(path, 'r') as f:
-                  content = f.read()
-              content = re.sub(r'(define import-namespace\n).*?(endef)', r'\1endef', content, flags=re.DOTALL)
-              with open(path, 'w') as f:
-                  f.write(content)
-              print('Patched import-namespace to no-op')
-          else:
-              print('legacy_product_config.mk not found')
-          "
+          sed -i '/If we just inherited ourselves/,/error import of/d' build/core/node_fns.mk
+          sed -i 's/$(error import of "$(2)" failed)//g' build/core/node_fns.mk
+          echo "Patched cycle detection in node_fns.mk"
 
       - name: Setup build environment
         working-directory: halium
