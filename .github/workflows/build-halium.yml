@@ -15,6 +15,7 @@ env:
   VENDOR: xiaomi
   LUNCH_COMBO: halium_selene-userdebug
   HALIUM_VERSION: halium-11.0
+  KERNEL_MAKE_FLAGS: PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p
 
 permissions:
   contents: write
