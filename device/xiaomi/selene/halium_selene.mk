@@ -3,7 +3,7 @@
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_r.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/halium.mk)
+$(call inherit-product, vendor/halium/config/halium.mk)
 
 # Inherit device configuration
 $(call inherit-product, $(LOCAL_PATH)/device.mk)
