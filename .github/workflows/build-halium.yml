@@ -88,13 +88,6 @@ jobs:
             https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git \
             kernel/xiaomi/selene
 
-      - name: Clone vendor blobs
-        working-directory: halium
-        run: |
-          git clone --depth=1 -b lineage-20 \
-            https://github.com/selene-devs/android_vendor_xiaomi_selene.git \
-            vendor/xiaomi/selene 2>/dev/null || true
-
       - name: Clone MTK sepolicy
         working-directory: halium
         run: |
