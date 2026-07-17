@@ -1,7 +1,5 @@
 # Board config for Samsung Galaxy J7 Neo (j7velte) - Halium 9.0
 
--include device/samsung/universal7870-common/BoardConfigCommon.mk
-
 # Architecture
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
@@ -19,15 +17,14 @@ TARGET_COPY_OUT_VENDOR := vendor
 
 TARGET_BOARD_ODM_DEVICE := samsungexynos7870
 
-# Kernel
-TARGET_KERNEL_CONFIG := lineage_j7velte_defconfig
-TARGET_KERNEL_VARIANT_CONFIG := kernel_defconfig
-KERNEL_MAKE_FLAGS := PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p
+# Kernel (prebuilt - compiled via build-kernel workflow)
+TARGET_PREBUILT_KERNEL := device/samsung/j7velte/prebuilt/Image.gz
+TARGET_NO_KERNEL := false
 
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_KERNEL_PAGESIZE := 2048
-BOARD_MKBOOTIMG_ARGS := --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 --board 0x00000000
-BOARD_KERNEL_IMAGE_NAME := Image
+BOARD_MKBOOTIMG_ARGS := --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 --board 0x00000000 --header_version 2
+BOARD_KERNEL_IMAGE_NAME := Image.gz
 
 # Halium: system-as-root
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
@@ -72,6 +69,3 @@ WIFI_DRIVER_FW_PATH_STA := "/vendor/etc/firmware/fw_bcmdhd.bin"
 
 # SELinux
 BOARD_SEPOLICY_DIRS += device/samsung/j7velte/sepolicy
-
-# Inherit from vendor
--include vendor/samsung/j7velte/BoardConfigVendor.mk
