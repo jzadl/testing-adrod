@@ -1,8 +1,6 @@
 # Device makefile for Xiaomi Redmi 10 2022 (selene) - Halium 11.0
 # MediaTek MT6768 (Helio G88)
 
-$(call inherit-product, $(LOCAL_PATH)/halium_selene.mk)
-
 # SoC
 PRODUCT_PROPERTY_OVERRIDES += ro.soc.model=MT6768
 
