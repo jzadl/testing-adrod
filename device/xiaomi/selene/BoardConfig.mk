@@ -24,15 +24,15 @@ TARGET_NO_KERNEL := false
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 
 BOARD_KERNEL_BASE := 0x40000000
-BOARD_KERNEL_PAGESIZE := 4096
+BOARD_KERNEL_PAGESIZE := 2048
 BOARD_KERNEL_OFFSET := 0x00008000
-BOARD_RAMDISK_OFFSET := 0x11000000
-BOARD_TAGS_OFFSET := 0x07800000
+BOARD_RAMDISK_OFFSET := 0x07c80000
+BOARD_TAGS_OFFSET := 0x0bc80000
 BOARD_MKBOOTIMG_ARGS := --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --tags_offset $(BOARD_TAGS_OFFSET) --header_version 2
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 
-# Kernel cmdline
-BOARD_KERNEL_CMDLINE := androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 console=tty0 androidboot.selinux=permissive buildvariant=userdebug
+# Kernel cmdline (stock + Halium additions)
+BOARD_KERNEL_CMDLINE := androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 bootopt=64S3,32N2,64N2 console=tty0 androidboot.selinux=permissive buildvariant=userdebug
 
 # Halium: system-as-root
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
