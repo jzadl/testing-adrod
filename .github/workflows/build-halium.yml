@@ -87,7 +87,7 @@ jobs:
         run: |
           echo "Downloading prebuilt kernel from latest successful semirelease..."
           # Find latest successful kernel release tag
-          TAG=$(gh release list --limit=50 2>/dev/null | grep 'successful.semirelease.selene' | head -1 | awk '{print $1}')
+          TAG=$(gh release list --limit=50 --json tagName,name -q '.[] | select(.tagName | test("successful\\.semirelease\\.selene")) | .tagName' 2>/dev/null | head -1)
           if [ -z "$TAG" ]; then
             echo "ERROR: No successful kernel release found. Run the kernel build first."
             exit 1
@@ -132,14 +132,29 @@ jobs:
               print(f'{path} not found')
           PYEOF
 
-      - name: Fix Soong KERNEL_MAKE_FLAGS variable
+      - name: Fix Soong Make variables
         working-directory: halium
         run: |
           SOONG_BP="vendor/lineage/build/soong/Android.bp"
           if [ -f "$SOONG_BP" ]; then
-            echo "Patching $SOONG_BP to inline KERNEL_MAKE_FLAGS..."
-            sed -i 's/\$(KERNEL_MAKE_FLAGS)/PLATFORM_VERSION=11.0.0 ANDROID_MAJOR_VERSION=r/g' "$SOONG_BP"
-            echo "Patched. Line 31 context:"
+            echo "Patching $SOONG_BP to remove all Make-style \$(...) variables..."
+            python3 << 'PYEOF'
+            import re
+            path = 'vendor/lineage/build/soong/Android.bp'
+            with open(path, 'r') as f:
+                content = f.read()
+            content = content.replace('$(KERNEL_MAKE_FLAGS)', 'PLATFORM_VERSION=11.0.0 ANDROID_MAJOR_VERSION=r')
+            content = content.replace('$(TARGET_KERNEL_SOURCE)', 'kernel/xiaomi/selene')
+            content = content.replace('$(TARGET_KERNEL_OUT)', 'out/target/product/selene/obj/KERNEL_OBJ')
+            content = content.replace('$(TARGET_KERNEL_ARCH)', 'arm64')
+            content = content.replace('$(KERNEL_DIR)', 'kernel/xiaomi/selene')
+            content = content.replace('$(KERNEL_OUT)', 'out/target/product/selene/obj/KERNEL_OBJ')
+            content = re.sub(r'\$\([A-Z_]+\)', '', content)
+            with open(path, 'w') as f:
+                f.write(content)
+            print('Patched all Make variables from Soong Android.bp')
+            PYEOF
+            echo "Line 31 context:"
             sed -n '29,33p' "$SOONG_BP"
           else
             echo "$SOONG_BP not found, skipping"
