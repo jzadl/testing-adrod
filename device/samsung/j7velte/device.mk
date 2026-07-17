@@ -1,7 +1,5 @@
 # Device makefile for Samsung Galaxy J7 Neo (j7velte) - Halium 9.0
 
-$(call inherit-product, $(LOCAL_PATH)/halium_j7velte.mk)
-
 # Inherit from common (optional)
 $(call inherit-product-if-exists, device/samsung/universal7870-common/device-common.mk)
 
