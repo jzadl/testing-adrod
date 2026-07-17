@@ -81,3 +81,83 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Telegram on success
+        if: success()
+        shell: bash
+        run: |
+          esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
+          CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
+          BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
+          RUN="${{ github.run_number }}"
+          RUN_ID="${{ github.run_id }}"
+          REPO="${{ github.repository }}"
+          ACTOR="${{ github.actor }}"
+          REF="${{ github.ref_name }}"
+          SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+          COMMIT_MSG=$(git log -1 --format=%s 2>/dev/null | esc || echo "N/A")
+          K_COMMIT=$(cd kernel && git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+          K_FULL=$(cd kernel && git rev-parse HEAD 2>/dev/null || echo "N/A")
+          IMG=$(ls out/ 2>/dev/null | head -1 || echo "N/A")
+          IMG_SIZE=$(du -h "out/$IMG" 2>/dev/null | cut -f1 || echo "N/A")
+          IMG_SHA=$(sha256sum "out/$IMG" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
+          printf -v MSG '%s\n' \
+            "✅ <b>J7 Neo Kernel Build #$RUN SUCCEEDED</b>" \
+            "" \
+            "<b>Device:</b> Samsung Galaxy J7 Neo (j7velte)" \
+            "<b>SoC:</b> Exynos 7870" \
+            "<b>Source:</b> halium-exynos/android_kernel_samsung_exynos7870" \
+            "<b>Branch:</b> halium-9.0" \
+            "<b>Kernel commit:</b> <code>$K_COMMIT</code>" \
+            "<b>Full kernel commit:</b> <code>$K_FULL</code>" \
+            "<b>Image:</b> <code>$IMG</code> ($IMG_SIZE)" \
+            "<b>SHA256:</b> <code>$IMG_SHA</code>" \
+            "" \
+            "<b>Release tag:</b> successful.semirelease.j7velte.$RUN" \
+            "<b>Repo commit:</b> <code>$SHA_SHORT</code>" \
+            "<b>Commit msg:</b> $COMMIT_MSG" \
+            "<b>Triggered by:</b> $ACTOR" \
+            "<b>Branch:</b> $REF" \
+            "" \
+            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">🔗 View run on GitHub</a>"
+          jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
+            '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
+            > /tmp/tg.json
+          curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
+            -H "Content-Type: application/json" -d @/tmp/tg.json
+
+      - name: Notify Telegram on failure
+        if: failure()
+        shell: bash
+        run: |
+          esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
+          CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
+          BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
+          RUN="${{ github.run_number }}"
+          RUN_ID="${{ github.run_id }}"
+          REPO="${{ github.repository }}"
+          ACTOR="${{ github.actor }}"
+          REF="${{ github.ref_name }}"
+          SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+          COMMIT_MSG=$(git log -1 --format=%s 2>/dev/null | esc || echo "N/A")
+          K_COMMIT=$(cd kernel && git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+          printf -v MSG '%s\n' \
+            "❌ <b>J7 Neo Kernel Build #$RUN FAILED</b>" \
+            "" \
+            "<b>Device:</b> Samsung Galaxy J7 Neo (j7velte)" \
+            "<b>SoC:</b> Exynos 7870" \
+            "<b>Source:</b> halium-exynos/android_kernel_samsung_exynos7870" \
+            "<b>Branch:</b> halium-9.0" \
+            "<b>Kernel commit:</b> <code>$K_COMMIT</code>" \
+            "" \
+            "<b>Repo commit:</b> <code>$SHA_SHORT</code>" \
+            "<b>Commit msg:</b> $COMMIT_MSG" \
+            "<b>Triggered by:</b> $ACTOR" \
+            "<b>Branch:</b> $REF" \
+            "" \
+            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">🔗 View run on GitHub</a>"
+          jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
+            '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
+            > /tmp/tg.json
+          curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
+            -H "Content-Type: application/json" -d @/tmp/tg.json
