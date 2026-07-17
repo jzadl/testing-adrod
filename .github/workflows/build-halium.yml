@@ -111,6 +111,19 @@ jobs:
               print(f'{path} not found')
           PYEOF
 
+      - name: Fix Soong KERNEL_MAKE_FLAGS variable
+        working-directory: halium
+        run: |
+          SOONG_BP="vendor/lineage/build/soong/Android.bp"
+          if [ -f "$SOONG_BP" ]; then
+            echo "Patching $SOONG_BP to inline KERNEL_MAKE_FLAGS..."
+            sed -i 's/\$(KERNEL_MAKE_FLAGS)/PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p/g' "$SOONG_BP"
+            echo "Patched. Line 31 context:"
+            sed -n '29,33p' "$SOONG_BP"
+          else
+            echo "$SOONG_BP not found, skipping"
+          fi
+
       - name: Setup build environment
         working-directory: halium
         run: |
