@@ -14,6 +14,9 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
 TARGET_2ND_CPU_ABI := armeabi-v7a
 TARGET_2ND_CPU_ABI2 := armeabi
 
+# Vendor
+TARGET_COPY_OUT_VENDOR := vendor
+
 TARGET_BOARD_ODM_DEVICE := samsungexynos7870
 
 # Kernel
