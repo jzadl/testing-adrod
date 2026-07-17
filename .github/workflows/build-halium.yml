@@ -108,9 +108,20 @@ jobs:
       - name: Patch import-namespace to avoid cycle errors
         working-directory: halium
         run: |
-          sed -i '/If we just inherited ourselves/,/error import of/d' build/core/node_fns.mk
-          sed -i 's/$(error import of "$(2)" failed)//g' build/core/node_fns.mk
-          echo "Patched cycle detection in node_fns.mk"
+          python3 << 'PYEOF'
+          import re
+          path = 'build/core/node_fns.mk'
+          try:
+              with open(path, 'r') as f:
+                  content = f.read()
+              # Remove only the error line, keep the warning
+              content = re.sub(r'\$\(error import of "\$\(2\)" failed\)', '', content)
+              with open(path, 'w') as f:
+                  f.write(content)
+              print('Removed error import line from node_fns.mk')
+          except FileNotFoundError:
+              print(f'{path} not found')
+          PYEOF
 
       - name: Setup build environment
         working-directory: halium
