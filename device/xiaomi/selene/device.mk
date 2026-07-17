@@ -79,5 +79,5 @@ PRODUCT_PACKAGES += \
     libmtkshim \
     libmtkrilutils
 
-# Inherit from vendor blobs
-$(call inherit-product, vendor/xiaomi/selene/selene-vendor.mk)
+# Inherit from vendor blobs (optional)
+$(call inherit-product-if-exists, vendor/xiaomi/selene/selene-vendor.mk)
