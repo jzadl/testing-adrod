@@ -1,4 +1,4 @@
-# Device makefile for Xiaomi Redmi 10 2022 (selene) - Halium 9.0
+# Device makefile for Xiaomi Redmi 10 2022 (selene) - Halium 11.0
 # MediaTek MT6768 (Helio G88)
 
 $(call inherit-product, $(LOCAL_PATH)/halium_selene.mk)
@@ -70,24 +70,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/system.prop:$(TARGET_COPY_OUT_SYSTEM)/system.prop \
     $(LOCAL_PATH)/vendor.prop:$(TARGET_COPY_OUT_VENDOR)/vendor.prop
-
-# Audio configuration
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/audio_policy_configuration.xml \
-    $(LOCAL_PATH)/audio/audio_policy.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/audio_policy.conf \
-    $(LOCAL_PATH)/audio/audio_effects.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/audio_effects.xml
-
-# Media configuration
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/media/media_codecs.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/media_codecs.xml \
-    $(LOCAL_PATH)/media/media_codecs_performance.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/media_codecs_performance.xml \
-    $(LOCAL_PATH)/media/media_profiles.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/media_profiles.xml
-
-# Wifi configuration
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/wifi/p2p_supplicant_overlay.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/wifi/p2p_supplicant_overlay.conf \
-    $(LOCAL_PATH)/wifi/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/wifi/wpa_supplicant_overlay.conf \
-    $(LOCAL_PATH)/wifi/WMT.cfg:$(TARGET_COPY_OUT_SYSTEM)/etc/WMT.cfg
 
 # MTK specific
 PRODUCT_PACKAGES += \

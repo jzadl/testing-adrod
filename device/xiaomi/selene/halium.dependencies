@@ -15,6 +15,6 @@
     "remote": "github",
     "repository": "PixelExperience/device_mediatek_sepolicy_vndr",
     "target_path": "device/mediatek/sepolicy_vndr",
-    "branch": "thirteen"
+    "branch": "eleven"
   }
 ]

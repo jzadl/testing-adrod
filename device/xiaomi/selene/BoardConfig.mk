@@ -1,7 +1,7 @@
-# Board config for Xiaomi Redmi 10 2022 (selene) - Halium 9.0
+# Board config for Xiaomi Redmi 10 2022 (selene) - Halium 11.0
 # MediaTek MT6768 (Helio G88)
 
-TARGET_board_platform := mt6768
+TARGET_BOARD_PLATFORM := mt6768
 
 # Kernel
 TARGET_KERNEL_CONFIG := selene_defconfig
@@ -65,8 +65,6 @@ TARGET_SCREEN_HEIGHT := 2400
 
 # MTK specific
 BOARD_USES_MTK_HARDWARE := true
-BOARD_USES MediaTek_HARDWARE := true
-BOARD_USES_MEDITEK_HARDWARE := true
 MTK_HARDWARE := true
 
 # Bluetooth

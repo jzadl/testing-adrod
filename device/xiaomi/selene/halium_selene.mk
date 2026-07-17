@@ -2,7 +2,7 @@
 # MediaTek MT6768 (Helio G88)
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_p.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_r.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/halium.mk)
 
 # Inherit device configuration
