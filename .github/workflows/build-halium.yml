@@ -13,6 +13,7 @@ env:
   CODENAME: j7velte
   VENDOR: samsung
   LUNCH_COMBO: halium_j7velte-userdebug
+  KERNEL_MAKE_FLAGS: PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p
 
 permissions:
   contents: write
