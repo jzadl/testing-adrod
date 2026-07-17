@@ -116,25 +116,24 @@ jobs:
         run: |
           SOONG_BP="vendor/lineage/build/soong/Android.bp"
           if [ -f "$SOONG_BP" ]; then
-            echo "Patching $SOONG_BP to remove all Make-style \$(...) variables..."
-            python3 << 'PYEOF'
-            import re
-            path = 'vendor/lineage/build/soong/Android.bp'
-            with open(path, 'r') as f:
-                content = f.read()
-            # Replace all $(VAR) with hardcoded values for kernel build
-            content = content.replace('$(KERNEL_MAKE_FLAGS)', 'PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p')
-            content = content.replace('$(TARGET_KERNEL_SOURCE)', 'kernel/samsung/exynos7870')
-            content = content.replace('$(TARGET_KERNEL_OUT)', 'out/target/product/j7velte/obj/KERNEL_OBJ')
-            content = content.replace('$(TARGET_KERNEL_ARCH)', 'arm64')
-            content = content.replace('$(KERNEL_DIR)', 'kernel/samsung/exynos7870')
-            content = content.replace('$(KERNEL_OUT)', 'out/target/product/j7velte/obj/KERNEL_OBJ')
-            # Remove any remaining $(...) references
-            content = re.sub(r'\$\([A-Z_]+\)', '', content)
-            with open(path, 'w') as f:
-                f.write(content)
-            print('Patched all Make variables from Soong Android.bp')
-            PYEOF
+            echo "Patching $SOONG_BP to remove all Make-style vars..."
+            sed -i 's/\$(KERNEL_MAKE_FLAGS)/PLATFORM_VERSION=9.0.0 ANDROID_MAJOR_VERSION=p/g' "$SOONG_BP"
+            sed -i 's/\$(TARGET_KERNEL_SOURCE)/kernel\/samsung\/exynos7870/g' "$SOONG_BP"
+            sed -i 's/\$(TARGET_KERNEL_OUT)/out\/target\/product\/j7velte\/obj\/KERNEL_OBJ/g' "$SOONG_BP"
+            sed -i 's/\$(TARGET_KERNEL_ARCH)/arm64/g' "$SOONG_BP"
+            sed -i 's/\$(KERNEL_DIR)/kernel\/samsung\/exynos7870/g' "$SOONG_BP"
+            sed -i 's/\$(KERNEL_OUT)/out\/target\/product\/j7velte\/obj\/KERNEL_OBJ/g' "$SOONG_BP"
+            sed -i 's/\$(TARGET_KERNEL_CONFIG)/lineage_j7velte_defconfig/g' "$SOONG_BP"
+            sed -i 's/\$(TARGET_PREBUILT_KERNEL)/device\/samsung\/j7velte\/prebuilt\/Image.gz/g' "$SOONG_BP"
+            sed -i 's/\$(BOARD_KERNEL_IMAGE_NAME)/Image.gz/g' "$SOONG_BP"
+            python3 -c "
+          import re
+          path = '$SOONG_BP'
+          with open(path) as f: c = f.read()
+          c2 = re.sub(r'\\\$\\([A-Z_]+\\\)', '', c)
+          with open(path, 'w') as f: f.write(c2)
+          print('Done patching Soong Android.bp')
+          "
             echo "Line 31 context:"
             sed -n '29,33p' "$SOONG_BP"
           else
