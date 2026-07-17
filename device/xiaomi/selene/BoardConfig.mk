@@ -15,6 +15,9 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
 TARGET_2ND_CPU_ABI := armeabi-v7a
 TARGET_2ND_CPU_ABI2 := armeabi
 
+# Vendor
+TARGET_COPY_OUT_VENDOR := vendor
+
 # Kernel
 TARGET_KERNEL_CONFIG := selene_defconfig
 TARGET_KERNEL_VARIANT_CONFIG := kernel_defconfig
