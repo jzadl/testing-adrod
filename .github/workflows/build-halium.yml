@@ -61,11 +61,6 @@ jobs:
           repo init -u https://github.com/Halium/android -b halium-9.0 --depth=1
           repo sync -c -j$(nproc --all) --no-tags --force-sync
 
-      - name: Apply Hybris patches
-        working-directory: halium
-        run: |
-          ./hybris-patches/apply-patches.sh --mb
-
       - name: Clone device tree
         working-directory: halium
         run: |
@@ -105,6 +100,11 @@ jobs:
         working-directory: halium/kernel/samsung/exynos7870
         run: |
           sed -i 's/YYLTYPE yylloc;/YYLTYPE yylloc;\nYYLTYPE yyerror_yylloc;/' scripts/dtc/dtc-lexer.l 2>/dev/null || true
+
+      - name: Apply Hybris patches
+        working-directory: halium
+        run: |
+          ./hybris-patches/apply-patches.sh --mb
 
       - name: Setup build environment
         working-directory: halium
