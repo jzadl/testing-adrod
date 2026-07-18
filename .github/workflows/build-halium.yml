@@ -145,6 +145,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Filter proprietary-files.txt to only existing blobs
+        working-directory: halium
+        run: |
+          PROP="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt"
+          DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
+          FILTERED=$(mktemp)
+          KEPT=0; REMOVED=0
+          while IFS= read -r line; do
+            [[ -z "$line" || "$line" == \#* ]] && echo "$line" >> "$FILTERED" && continue
+            [[ "$line" == -* ]] && echo "$line" >> "$FILTERED" && continue
+            src="${line%%|*}"
+            if [ -f "$DEST/$src" ]; then
+              echo "$line" >> "$FILTERED"
+              KEPT=$((KEPT + 1))
+            else
+              REMOVED=$((REMOVED + 1))
+            fi
+          done < "$PROP"
+          cp "$FILTERED" "$PROP"
+          rm "$FILTERED"
+          echo "Filtered: $KEPT kept, $REMOVED removed (not in firmware)"
+
       - name: Generate vendor makefile from proprietary-files.txt
         working-directory: halium
         run: |
