@@ -6,6 +6,7 @@ on:
     branches:
       - halium-selene
     paths:
+      - 'dts/**'
       - 'device/**'
       - 'vendor/**'
       - '.github/workflows/build-halium.yml'
@@ -75,13 +76,14 @@ jobs:
           repo init -u https://github.com/Halium/android -b ${{ env.HALIUM_VERSION }} --depth=1
           repo sync -c -j$(nproc --all) --no-tags --force-sync
 
-      - name: Clone device tree
+      - name: Place device tree
         working-directory: halium
         run: |
+          # Place DT from dts/ into the Halium tree
           mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}
-          cp -r ${{ github.workspace }}/device/${{ env.VENDOR }}/${{ env.DEVICE }}/* \
-            device/${{ env.VENDOR }}/${{ env.DEVICE }}/
-          # Copy vendor makefiles
+          cp -r ${{ github.workspace }}/dts/* device/${{ env.VENDOR }}/${{ env.DEVICE }}/
+
+          # Place vendor makefiles
           mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}
           cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor.mk \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
@@ -89,6 +91,9 @@ jobs:
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
           cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+
+          echo "Device tree placed:"
+          ls device/${{ env.VENDOR }}/${{ env.DEVICE }}/
 
       - name: Download and extract vendor blobs
         working-directory: halium
@@ -215,7 +220,9 @@ jobs:
           lunch ${{ env.LUNCH_COMBO }}
           export USE_CCACHE=1
           export CCACHE_DIR=~/.ccache
-          make halium-boot -j2
+          export USE_HOST_LEX=yes
+          mka mkbootimg
+          mka hybris-boot -j$(nproc --all)
 
       - name: Build system image
         working-directory: halium
@@ -224,7 +231,8 @@ jobs:
           lunch ${{ env.LUNCH_COMBO }}
           export USE_CCACHE=1
           export CCACHE_DIR=~/.ccache
-          mka systemimage -j2
+          export USE_HOST_LEX=yes
+          mka systemimage -j$(nproc --all)
 
       - name: Collect output
         working-directory: halium
