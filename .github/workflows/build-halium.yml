@@ -252,16 +252,39 @@ jobs:
         run: |
           CONFIG="build/soong/ui/build/paths/config.go"
           if [ -f "$CONFIG" ]; then
-            grep -c "mkbootimg" "$CONFIG" && echo "mkbootimg already in config" && exit 0
-            # Dump first 20 lines to understand format
-            head -30 "$CONFIG"
-            # Try adding mkbootimg after any existing tool entry
-            sed -i '/"mke2fs"/a\        "mkbootimg",' "$CONFIG" 2>/dev/null || \
-            sed -i '/mke2fs/a\        mkbootimg,' "$CONFIG" 2>/dev/null || \
-            echo "sed failed, will use manual build fallback"
-            grep -c "mkbootimg" "$CONFIG" && echo "SUCCESS: mkbootimg added" || echo "WILL_USE_MANUAL_BUILD"
+            grep -n "mkbootimg" "$CONFIG" && echo "mkbootimg already allowed" && exit 0
+            # Find the allowed tools list and add mkbootimg
+            python3 << 'PYEOF'
+          path = 'build/soong/ui/build/paths/config.go'
+          with open(path) as f:
+              lines = f.readlines()
+          new_lines = []
+          added = False
+          for line in lines:
+              new_lines.append(line)
+              if not added and '"mke2fs"' in line:
+                  # Add mkbootimg right after mke2fs (alphabetical order)
+                  indent = line[:len(line) - len(line.lstrip())]
+                  new_lines.append(indent + '"mkbootimg",\n')
+                  added = True
+                  print('Added mkbootimg to allowed tools after mke2fs')
+          if not added:
+              # Fallback: find any tool entry and add after it
+              for i, line in enumerate(lines):
+                  if '""' in line and 'Tool' not in line:
+                      indent = line[:len(line) - len(line.lstrip())]
+                      new_lines.insert(i + 1, indent + '"mkbootimg",\n')
+                      added = True
+                      print(f'Added mkbootimg at line {i+1}')
+                      break
+          with open(path, 'w') as f:
+              f.writelines(new_lines)
+          if not added:
+              print('WARNING: Could not find insertion point for mkbootimg')
+          PYEOF
           else
-            echo "config.go not found, will use manual build fallback"
+            echo "PATHS config not found, patching Android.mk instead"
+            sed -i 's|@mkbootimg|$(HOST_OUT)/bin/mkbootimg|g' vendor/halium/halium-boot/Android.mk
           fi
 
       - name: Remove broken platform_testing test files
@@ -299,28 +322,7 @@ jobs:
           export CCACHE_DIR=~/.ccache
           export USE_HOST_LEX=yes
           mka mkbootimg
-          # Try ninja halium-boot; if mkbootimg disallowed, build manually
-          mka halium-boot -j$(nproc --all) && exit 0
-          echo "ninja halium-boot failed, building manually..."
-          MKBOOTIMG="$(pwd)/out/host/linux-x86/bin/mkbootimg"
-          KERNEL="$(pwd)/out/target/product/${{ env.DEVICE }}/kernel"
-          INITRD="$(pwd)/out/target/product/${{ env.DEVICE }}/obj/ROOT/halium-boot_intermediates/halium-initramfs.gz"
-          OUTPUT="$(pwd)/out/target/product/${{ env.DEVICE }}/halium-boot.img"
-          if [ ! -f "$MKBOOTIMG" ]; then echo "mkbootimg not found at $MKBOOTIMG"; exit 1; fi
-          if [ ! -f "$KERNEL" ]; then echo "kernel not found at $KERNEL"; exit 1; fi
-          if [ ! -f "$INITRD" ]; then echo "initrd not found at $INITRD"; exit 1; fi
-          "$MKBOOTIMG" \
-            --kernel "$KERNEL" \
-            --ramdisk "$INITRD" \
-            --base 0x40000000 \
-            --pagesize 2048 \
-            --cmdline "androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 bootopt=64S3,32N2,64N2 console=tty0 androidboot.selinux=permissive buildvariant=userdebug" \
-            --kernel_offset 0x00008000 \
-            --ramdisk_offset 0x07c80000 \
-            --tags_offset 0x0bc80000 \
-            --header_version 2 \
-            --output "$OUTPUT"
-          ls -la "$OUTPUT"
+          mka halium-boot -j$(nproc --all)
 
       - name: Build system image
         working-directory: halium
