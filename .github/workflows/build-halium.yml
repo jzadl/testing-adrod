@@ -103,6 +103,7 @@ jobs:
           sudo mount -o ro,loop /tmp/vendor_a.img /tmp/vendor_mnt
           mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
           sudo cp -a /tmp/vendor_mnt/* vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
+          sudo chown -R $(id -u):$(id -g) vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
           sudo umount /tmp/vendor_mnt
           rm /tmp/vendor_a.img
           echo "Vendor blobs extracted:"
