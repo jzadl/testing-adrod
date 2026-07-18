@@ -184,16 +184,18 @@ jobs:
             sed -i 's/\$(TARGET_KERNEL_CONFIG)/selene_defconfig/g' "$SOONG_BP"
             sed -i 's/\$(TARGET_PREBUILT_KERNEL)/device\/xiaomi\/selene\/prebuilt\/Image.gz-dtb/g' "$SOONG_BP"
             sed -i 's/\$(BOARD_KERNEL_IMAGE_NAME)/Image.gz-dtb/g' "$SOONG_BP"
-            python3 -c "
-          import re, sys
-          path = '$SOONG_BP'
-          with open(path) as f: c = f.read()
-          c2 = re.sub(r'\\\$\\([A-Z_]+\\\)', '', c)
+            python3 << 'PYEOF'
+          import re
+          path = 'vendor/lineage/build/soong/Android.bp'
+          with open(path) as f:
+              c = f.read()
+          c2 = re.sub(r'\$\([A-Z_]+\)', '', c)
           if c2 != c:
               print('WARNING: remaining Make vars found, cleaned')
-          with open(path, 'w') as f: f.write(c2)
+          with open(path, 'w') as f:
+              f.write(c2)
           print('Done patching Soong Android.bp')
-          "
+          PYEOF
             echo "Line 31 context:"
             sed -n '29,33p' "$SOONG_BP"
           else
