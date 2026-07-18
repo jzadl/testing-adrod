@@ -7,8 +7,8 @@ on:
       - halium-selene
     paths:
       - 'dts/**'
-      - 'device/**'
       - 'vendor/**'
+      - 'scripts/**'
       - '.github/workflows/build-halium.yml'
 
 env:
@@ -79,15 +79,13 @@ jobs:
       - name: Place device tree
         working-directory: halium
         run: |
-          # Place DT from dts/ into the Halium tree
           mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}
           cp -r ${{ github.workspace }}/dts/* device/${{ env.VENDOR }}/${{ env.DEVICE }}/
 
-          # Place vendor makefiles
           mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}
-          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor.mk \
+          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
-          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor-files.mk \
+          cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor.mk \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
           cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
@@ -95,7 +93,7 @@ jobs:
           echo "Device tree placed:"
           ls device/${{ env.VENDOR }}/${{ env.DEVICE }}/
 
-      - name: Download and extract vendor blobs
+      - name: Extract vendor blobs (filtered by proprietary-files.txt)
         working-directory: halium
         run: |
           echo "Downloading vendor_a.img from release..."
@@ -104,38 +102,65 @@ jobs:
             --dir /tmp/ 2>&1
           ls -lh /tmp/vendor_a.img
 
-          # Mount and extract
           sudo mkdir -p /tmp/vendor_mnt
           sudo mount -o ro,loop /tmp/vendor_a.img /tmp/vendor_mnt
 
-          mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
-          sudo cp -a /tmp/vendor_mnt/* vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
+          PROP_LIST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt"
+          DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
+          mkdir -p "$DEST"
+
+          # Copy only files listed in proprietary-files.txt
+          COPIED=0
+          MISSING=0
+          while IFS= read -r line; do
+            # Skip comments, empty lines, system files (-), hash suffixes
+            [[ -z "$line" || "$line" =~ ^# || "$line" =~ ^- ]] && continue
+            src_path="${line%%|*}"
+            
+            # Skip VINTF and APK files
+            [[ "$src_path" == *"/vintf/"* || "$src_path" == *".apk" || "$src_path" == *".jar" ]] && continue
+            
+            src_full="/tmp/vendor_mnt/$src_path"
+            dst_full="$DEST/$src_path"
+            
+            if [ -f "$src_full" ]; then
+              mkdir -p "$(dirname "$dst_full")"
+              cp "$src_full" "$dst_full"
+              COPIED=$((COPIED + 1))
+            else
+              echo "MISSING: $src_path"
+              MISSING=$((MISSING + 1))
+            fi
+          done < "$PROP_LIST"
+
           sudo umount /tmp/vendor_mnt
           rm /tmp/vendor_a.img
 
-          # Fix permissions and remove junk
-          sudo chown -R $(id -u):$(id -g) vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
-          sudo chmod -R u+rwx vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
-          rm -rf vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/lost+found
+          sudo chown -R $(id -u):$(id -g) "$DEST/"
+          sudo chmod -R u+rwx "$DEST/"
+          rm -rf "$DEST/lost+found"
 
-          echo "Vendor blobs extracted:"
-          du -sh vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
-          ls vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/ | head -20
+          echo "Blobs extracted: $COPIED copied, $MISSING missing"
+          du -sh "$DEST/"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate vendor makefile from proprietary-files.txt
+        working-directory: halium
+        run: |
+          python3 ${{ github.workspace }}/scripts/generate_vendor_mk.py \
+            vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt \
+            vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor-files.mk
 
       - name: Download prebuilt kernel from latest release
         working-directory: halium
         run: |
-          echo "Downloading prebuilt kernel from latest successful semirelease..."
-          # Find latest successful kernel release tag
           TAG=$(gh release list --limit=50 --json tagName,name -q '.[] | select(.tagName | test("successful\\.semirelease\\.selene")) | .tagName' 2>/dev/null | head -1)
           if [ -z "$TAG" ]; then
             echo "ERROR: No successful kernel release found. Run the kernel build first."
             exit 1
           fi
           echo "Found release: $TAG"
-          # Download Image.gz-dtb into prebuilt dir
           mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt
           gh release download "$TAG" --pattern "Image.gz-dtb" \
             --dir device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/ 2>&1
@@ -165,7 +190,6 @@ jobs:
           try:
               with open(path, 'r') as f:
                   content = f.read()
-              # Remove only the error line, keep the warning
               content = re.sub(r'\$\(error import of "\$\(2\)" failed\)', '', content)
               with open(path, 'w') as f:
                   f.write(content)
@@ -179,16 +203,6 @@ jobs:
         run: |
           SOONG_BP="vendor/lineage/build/soong/Android.bp"
           if [ -f "$SOONG_BP" ]; then
-            echo "Patching $SOONG_BP to remove all Make-style vars..."
-            sed -i 's/\$(KERNEL_MAKE_FLAGS)/PLATFORM_VERSION=11.0.0 ANDROID_MAJOR_VERSION=r/g' "$SOONG_BP"
-            sed -i 's/\$(TARGET_KERNEL_SOURCE)/kernel\/xiaomi\/selene/g' "$SOONG_BP"
-            sed -i 's/\$(TARGET_KERNEL_OUT)/out\/target\/product\/selene\/obj\/KERNEL_OBJ/g' "$SOONG_BP"
-            sed -i 's/\$(TARGET_KERNEL_ARCH)/arm64/g' "$SOONG_BP"
-            sed -i 's/\$(KERNEL_DIR)/kernel\/xiaomi\/selene/g' "$SOONG_BP"
-            sed -i 's/\$(KERNEL_OUT)/out\/target\/product\/selene\/obj\/KERNEL_OBJ/g' "$SOONG_BP"
-            sed -i 's/\$(TARGET_KERNEL_CONFIG)/selene_defconfig/g' "$SOONG_BP"
-            sed -i 's/\$(TARGET_PREBUILT_KERNEL)/device\/xiaomi\/selene\/prebuilt\/Image.gz-dtb/g' "$SOONG_BP"
-            sed -i 's/\$(BOARD_KERNEL_IMAGE_NAME)/Image.gz-dtb/g' "$SOONG_BP"
             python3 << 'PYEOF'
           import re
           path = 'vendor/lineage/build/soong/Android.bp'
@@ -196,13 +210,11 @@ jobs:
               c = f.read()
           c2 = re.sub(r'\$\([A-Z_]+\)', '', c)
           if c2 != c:
-              print('WARNING: remaining Make vars found, cleaned')
+              print('Cleaned Make vars from Soong Android.bp')
           with open(path, 'w') as f:
               f.write(c2)
-          print('Done patching Soong Android.bp')
+          print('Done')
           PYEOF
-            echo "Line 31 context:"
-            sed -n '29,33p' "$SOONG_BP"
           else
             echo "$SOONG_BP not found, skipping"
           fi
@@ -273,7 +285,6 @@ jobs:
           ACTOR="${{ github.actor }}"
           REF="${{ github.ref_name }}"
           SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
-          SHA_FULL=$(git rev-parse HEAD 2>/dev/null || echo "N/A")
           COMMIT_MSG=$(git log -1 --format=%s 2>/dev/null | esc || echo "N/A")
           printf -v MSG '%s\n' \
             "✅ <b>Halium 11 Build for Selene #$RUN SUCCEEDED</b>" \
@@ -282,17 +293,14 @@ jobs:
             "<b>SoC:</b> MediaTek MT6768 (Helio G88)" \
             "<b>Halium version:</b> 11.0 (Android 11/R)" \
             "<b>Kernel:</b> prebuilt Image.gz-dtb (from semirelease)" \
-            "<b>Vendor:</b> minimal stub (no full blobs)" \
+            "<b>Vendor:</b> curated proprietary-files.txt (~600 blobs)" \
             "" \
             "<b>Release tag:</b> successful.release.selene.halium11.$RUN" \
-            "<b>Artifact:</b> halium-selene-$RUN" \
             "" \
-            "<b>Repo commit:</b> <code>$SHA_SHORT</code>" \
-            "<b>Commit msg:</b> $COMMIT_MSG" \
-            "<b>Triggered by:</b> $ACTOR" \
-            "<b>Branch:</b> $REF" \
+            "<b>Commit:</b> <code>$SHA_SHORT</code> $COMMIT_MSG" \
+            "<b>Triggered by:</b> $ACTOR on $REF" \
             "" \
-            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">🔗 View run on GitHub</a>"
+            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">View run</a>"
           jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
             '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
             > /tmp/tg.json
@@ -317,15 +325,10 @@ jobs:
             "❌ <b>Halium 11 Build for Selene #$RUN FAILED</b>" \
             "" \
             "<b>Device:</b> Xiaomi Redmi 10 2022 (selene)" \
-            "<b>SoC:</b> MediaTek MT6768 (Helio G88)" \
-            "<b>Halium version:</b> 11.0 (Android 11/R)" \
+            "<b>Commit:</b> <code>$SHA_SHORT</code> $COMMIT_MSG" \
+            "<b>Triggered by:</b> $ACTOR on $REF" \
             "" \
-            "<b>Repo commit:</b> <code>$SHA_SHORT</code>" \
-            "<b>Commit msg:</b> $COMMIT_MSG" \
-            "<b>Triggered by:</b> $ACTOR" \
-            "<b>Branch:</b> $REF" \
-            "" \
-            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">🔗 View run on GitHub</a>"
+            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">View run</a>"
           jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
             '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
             > /tmp/tg.json
