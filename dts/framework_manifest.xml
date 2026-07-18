@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest version="1.0" type="device">
+    <configfile oneshot="true" root="/">/vendor/etc/vintf/manifest.xml</configfile>
+    <hal format="hidl">
+        <name>android.hardware.audio@6.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IDevicesFactory/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.audio.effect@6.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IEffectsFactory/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.bluetooth@1.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IBluetoothHci/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.camera.provider@2.6</name>
+        <transport>hwbinder</transport>
+        <fqname>ICameraProvider/internal/0</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.drm@1.3</name>
+        <transport>hwbinder</transport>
+        <fqname>IDrmFactory/clearkey</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.gatekeeper@1.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IGatekeeper/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.gnss@2.1</name>
+        <transport>hwbinder</transport>
+        <fqname>IGnss/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.graphics.allocator@4.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IAllocator/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.graphics.composer@2.1</name>
+        <transport>hwbinder</transport>
+        <fqname>IComposer/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.health@2.1</name>
+        <transport>hwbinder</transport>
+        <fqname>IHealth/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.keymaster@4.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IKeymasterDevice/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.sensors@2.0</name>
+        <transport>hwbinder</transport>
+        <fqname>ISensors/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.thermal@2.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IThermal/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.vibrator@1.3</name>
+        <transport>hwbinder</transport>
+        <fqname>IVibrator/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.wifi@1.0</name>
+        <transport>hwbinder</transport>
+        <fqname>IWifi/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.wifi.supplicant@1.3</name>
+        <transport>hwbinder</transport>
+        <fqname>ISupplicant/default</fqname>
+    </hal>
+</manifest>

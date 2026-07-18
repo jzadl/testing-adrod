@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <!-- MTK SEPolicy -->
+    <project path="device/mediatek/sepolicy_vndr"
+             name="PixelExperience/device_mediatek_sepolicy_vndr"
+             remote="github"
+             revision="eleven" />
+
+    <!-- Xiaomi vendor blobs (extracted from MIUI V12.5.20, placed by CI) -->
+    <project path="vendor/xiaomi/selene"
+             name="jzadl/testing-adrod"
+             remote="github"
+             revision="halium-selene" />
+</manifest>

@@ -1,0 +1,10 @@
+# Vendor properties for Xiaomi Redmi 10 2022 (selene)
+# Halium 11.0
+
+# ADB
+persist.sys.usb.config=adb
+persist.service.adb.enable=1
+
+# Display
+persist.vendor.display.color_safe=true
+ro.vendor.display.config.default_fps=60
