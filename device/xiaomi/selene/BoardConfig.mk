@@ -17,6 +17,9 @@ TARGET_2ND_CPU_ABI2 := armeabi
 
 # Vendor
 TARGET_COPY_OUT_VENDOR := vendor
+TARGET_COPY_OUT_ODM := odm
+TARGET_COPY_OUT_SYSTEM := system
+TARGET_COPY_OUT_PRODUCT := product
 
 # Prebuilt kernel (compiled separately via build-kernel-selene workflow)
 TARGET_PREBUILT_KERNEL := device/xiaomi/selene/prebuilt/Image.gz-dtb
