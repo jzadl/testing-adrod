@@ -241,6 +241,12 @@ jobs:
             echo "$SOONG_BP not found, skipping"
           fi
 
+      - name: Clone missing halium-boot repo
+        working-directory: halium
+        run: |
+          git clone --depth=1 https://github.com/Halium/halium-boot.git vendor/halium/halium-boot
+          echo "halium-boot cloned"
+
       - name: Remove broken platform_testing test files
         working-directory: halium
         run: |
