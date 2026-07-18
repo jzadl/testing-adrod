@@ -90,24 +90,26 @@ jobs:
           cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
 
-      - name: Download and extract vendor blobs
+      - name: Extract vendor blobs (use pre-extracted files)
         working-directory: halium
         run: |
-          echo "Downloading vendor_a.img from release..."
-          gh release download vendor-blobs-selene --pattern "vendor_a.img" \
-            --dir /tmp/ 2>&1
-          ls -lh /tmp/vendor_a.img
-          # Mount and extract
-          mkdir -p /tmp/vendor_mnt
-          sudo mkdir -p /tmp/vendor_mnt
-          sudo mount -o ro,loop /tmp/vendor_a.img /tmp/vendor_mnt
+          echo "Using pre-extracted vendor blobs from workspace..."
           mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
-          sudo cp -a /tmp/vendor_mnt/* vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
-          sudo chown -R $(id -u):$(id -g) vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
-          sudo umount /tmp/vendor_mnt
-          rm /tmp/vendor_a.img
-          echo "Vendor blobs extracted:"
+          # Copy the already extracted files from workspace
+          cp -r ../vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/. vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/ 2>&1
+          echo "Vendor blob extraction complete:"
           du -sh vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/
+          echo "Contents of vendor tree (first 10 items)..."
+          ls -la vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/ | head -15
+          echo "Checking if vendor files are accessible..."
+          if [ -f "vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/build.prop" ]; then
+            echo "✓ build.prop found in vendor tree"
+            DEVICE=$(grep "ro.product.device=" "vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary/build.prop" | cut -d= -f2 | cut -d; -f1)
+            echo "  Device: $DEVICE"
+          else
+            echo "✗ ERROR: build.prop NOT found in vendor tree!"
+            exit 1
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
