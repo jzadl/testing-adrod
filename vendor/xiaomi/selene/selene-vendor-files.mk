@@ -1350,32 +1350,11 @@ PRODUCT_COPY_FILES += \
     vendor/xiaomi/selene/proprietary/etc/init/vpud.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vpud.rc \
     vendor/xiaomi/selene/proprietary/etc/init/wlan_assistant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wlan_assistant.rc
 
-# etc vintf
-PRODUCT_COPY_FILES += \
-    vendor/xiaomi/selene/proprietary/etc/vintf/compatibility_matrix.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/compatibility_matrix.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.boot@1.1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.boot@1.1.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.cas@1.2-service.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.cas@1.2-service.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.dumpstate@1.1-service.xiaomi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.dumpstate@1.1-service.xiaomi.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.gpu@1.0-service.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.gpu@1.0-service.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.health@2.1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.health@2.1.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.wifi@1.0-service.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.wifi@1.0-service.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/android.hardware.wifi.hostapd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/android.hardware.wifi.hostapd.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/lights-mtk-default.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/lights-mtk-default.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_android.hardware.drm@1.3-service.clearkey.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_android.hardware.drm@1.3-service.clearkey.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_android.hardware.drm@1.3-service.widevine.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_android.hardware.drm@1.3-service.widevine.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.mfidoca.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.mfidoca.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.mlipay.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.mlipay.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.mtdservice.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.mtdservice.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.tidaservice.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.tidaservice.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.vsimapp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_vendor.xiaomi.hardware.vsimapp.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/manifest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/power-default.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/power-default.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/vendor.mediatek.hardware.dplanner@2.0-service.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/vendor.mediatek.hardware.dplanner@2.0-service.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/vendor.xiaomi.hardware.misys@1.0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/vendor.xiaomi.hardware.misys@1.0.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/vendor.xiaomi.hardware.misys@2.0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/vendor.xiaomi.hardware.misys@2.0.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/vendor.xiaomi.hardware.misys@3.0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/vendor.xiaomi.hardware.misys@3.0.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest/vibrator-mtk-default.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/vibrator-mtk-default.xml \
-    vendor/xiaomi/selene/proprietary/etc/vintf/manifest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest.xml
+# etc vintf - DISABLED: VINTF metadata cannot be in PRODUCT_COPY_FILES (Android 11)
+# Use DEVICE_MANIFEST_FILE / DEVICE_MATRIX_FILE instead
+# PRODUCT_COPY_FILES += \
+#     vendor/xiaomi/selene/proprietary/etc/vintf/compatibility_matrix.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/compatibility_matrix.xml \
+#     vendor/xiaomi/selene/proprietary/etc/vintf/manifest.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest.xml
 
 # etc selinux
 PRODUCT_COPY_FILES += \
@@ -1463,27 +1442,27 @@ PRODUCT_COPY_FILES += \
     vendor/xiaomi/selene/proprietary/etc/libnfc-nxp-pnscr.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nxp-pnscr.conf \
     vendor/xiaomi/selene/proprietary/etc/nfc/nfc_whitelist.properties:$(TARGET_COPY_OUT_VENDOR)/etc/nfc/nfc_whitelist.properties \
     vendor/xiaomi/selene/proprietary/libnfc-nxp_RF.conf:$(TARGET_COPY_OUT_VENDOR)/libnfc-nxp_RF.conf \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos/android.hardware.nfc@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/eos/android.hardware.nfc@1.0-service.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/android.hardware.nfc@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_p/android.hardware.nfc@1.0-service.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/vendor.nxp.hardware.nfc@1.2-service_selene.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_p/vendor.nxp.hardware.nfc@1.2-service_selene.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/android.hardware.nfc@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_u/android.hardware.nfc@1.0-service.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/vendor.nxp.hardware.nfc@1.2-service_selene.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_u/vendor.nxp.hardware.nfc@1.2-service_selene.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos/vendor.nxp.hardware.nfc@1.2-service_selene.rc:$(TARGET_COPY_OUT_ODM)/etc/eos/vendor.nxp.hardware.nfc@1.2-service_selene.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/android.hardware.nfc.hcef.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/android.hardware.nfc.hce.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.uicc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/android.hardware.nfc.uicc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/android.hardware.nfc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/com.android.nfc_extras.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/android.hardware.nfc.hcef.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/android.hardware.nfc.hce.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.uicc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/android.hardware.nfc.uicc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/android.hardware.nfc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/com.android.nfc_extras.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/android.hardware.nfc.hcef.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/android.hardware.nfc.hce.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.uicc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/android.hardware.nfc.uicc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/android.hardware.nfc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/com.android.nfc_extras.xml
+    vendor/xiaomi/selene/proprietary/odm/etc/eos/android.hardware.nfc@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos/android.hardware.nfc@1.0-service.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/android.hardware.nfc@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_p/android.hardware.nfc@1.0-service.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/vendor.nxp.hardware.nfc@1.2-service_selene.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_p/vendor.nxp.hardware.nfc@1.2-service_selene.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/android.hardware.nfc@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_u/android.hardware.nfc@1.0-service.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/vendor.nxp.hardware.nfc@1.2-service_selene.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_u/vendor.nxp.hardware.nfc@1.2-service_selene.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos/vendor.nxp.hardware.nfc@1.2-service_selene.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos/vendor.nxp.hardware.nfc@1.2-service_selene.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/android.hardware.nfc.hcef.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/android.hardware.nfc.hce.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.uicc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/android.hardware.nfc.uicc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/android.hardware.nfc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/com.android.nfc_extras.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/android.hardware.nfc.hcef.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/android.hardware.nfc.hce.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.uicc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/android.hardware.nfc.uicc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/android.hardware.nfc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/com.android.nfc_extras.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/android.hardware.nfc.hcef.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/android.hardware.nfc.hce.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.uicc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/android.hardware.nfc.uicc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/android.hardware.nfc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/com.android.nfc_extras.xml
 
 # etc thermal
 PRODUCT_COPY_FILES += \
@@ -1579,44 +1558,37 @@ PRODUCT_COPY_FILES += \
 
 # odm
 PRODUCT_COPY_FILES += \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_eos_p.prop:$(TARGET_COPY_OUT_ODM)/etc/build_eos_p.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_eos.prop:$(TARGET_COPY_OUT_ODM)/etc/build_eos.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_eos_u.prop:$(TARGET_COPY_OUT_ODM)/etc/build_eos_u.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build.prop:$(TARGET_COPY_OUT_ODM)/etc/build.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_la.prop:$(TARGET_COPY_OUT_ODM)/etc/build_selene_la.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_la_v.prop:$(TARGET_COPY_OUT_ODM)/etc/build_selene_la_v.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_p.prop:$(TARGET_COPY_OUT_ODM)/etc/build_selene_p.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_selene.prop:$(TARGET_COPY_OUT_ODM)/etc/build_selene.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_s.prop:$(TARGET_COPY_OUT_ODM)/etc/build_selene_s.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_t.prop:$(TARGET_COPY_OUT_ODM)/etc/build_selene_t.prop \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos/android.hardware.secure_element@1.2-service-mediatek.rc:$(TARGET_COPY_OUT_ODM)/etc/eos/android.hardware.secure_element@1.2-service-mediatek.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/android.hardware.secure_element@1.2-service-mediatek.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_p/android.hardware.secure_element@1.2-service-mediatek.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/vendor.microtrust.hardware.se@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_p/vendor.microtrust.hardware.se@1.0-service.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/android.hardware.secure_element@1.2-service-mediatek.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_u/android.hardware.secure_element@1.2-service-mediatek.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/vendor.microtrust.hardware.se@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/eos_u/vendor.microtrust.hardware.se@1.0-service.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/eos/vendor.microtrust.hardware.se@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/eos/vendor.microtrust.hardware.se@1.0-service.rc \
-    vendor/xiaomi/selene/proprietary/odm/etc/group:$(TARGET_COPY_OUT_ODM)/etc/group \
-    vendor/xiaomi/selene/proprietary/odm/etc/NOTICE_GPL.xml.gz:$(TARGET_COPY_OUT_ODM)/etc/NOTICE_GPL.xml.gz \
-    vendor/xiaomi/selene/proprietary/odm/etc/NOTICE.xml.gz:$(TARGET_COPY_OUT_ODM)/etc/NOTICE.xml.gz \
-    vendor/xiaomi/selene/proprietary/odm/etc/passwd:$(TARGET_COPY_OUT_ODM)/etc/passwd \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.se.omapi.uicc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/android.hardware.se.omapi.uicc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/com.nxp.mifare.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos/com.nxp.mifare.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.se.omapi.uicc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/android.hardware.se.omapi.uicc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/com.nxp.mifare.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_p/com.nxp.mifare.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.se.omapi.uicc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/android.hardware.se.omapi.uicc.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/com.nxp.mifare.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_eos_u/com.nxp.mifare.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_dsds.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_dsds.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_eos_p_ss.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_eos_p_ss.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_eos_p.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_eos_p.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_eos_ss.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_eos_ss.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_eos_u_ss.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_eos_u_ss.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_eos_u.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_eos_u.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_eos.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_eos.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_qsqs.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_qsqs.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_selene_ss.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_selene_ss.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_selene.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_selene.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_ss.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_ss.xml \
-    vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_tsts.xml:$(TARGET_COPY_OUT_ODM)/etc/vintf/manifest_tsts.xml
+    vendor/xiaomi/selene/proprietary/odm/etc/build_eos_p.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_eos_p.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_eos.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_eos.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_eos_u.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_eos_u.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_la.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_selene_la.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_la_v.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_selene_la_v.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_p.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_selene_p.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_selene.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_selene.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_s.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_selene_s.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/build_selene_t.prop:$(TARGET_COPY_OUT_VENDOR)/etc/build_selene_t.prop \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos/android.hardware.secure_element@1.2-service-mediatek.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos/android.hardware.secure_element@1.2-service-mediatek.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/android.hardware.secure_element@1.2-service-mediatek.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_p/android.hardware.secure_element@1.2-service-mediatek.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_p/vendor.microtrust.hardware.se@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_p/vendor.microtrust.hardware.se@1.0-service.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/android.hardware.secure_element@1.2-service-mediatek.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_u/android.hardware.secure_element@1.2-service-mediatek.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos_u/vendor.microtrust.hardware.se@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos_u/vendor.microtrust.hardware.se@1.0-service.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/eos/vendor.microtrust.hardware.se@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/eos/vendor.microtrust.hardware.se@1.0-service.rc \
+    vendor/xiaomi/selene/proprietary/odm/etc/group:$(TARGET_COPY_OUT_VENDOR)/etc/group \
+    vendor/xiaomi/selene/proprietary/odm/etc/NOTICE_GPL.xml.gz:$(TARGET_COPY_OUT_VENDOR)/etc/NOTICE_GPL.xml.gz \
+    vendor/xiaomi/selene/proprietary/odm/etc/NOTICE.xml.gz:$(TARGET_COPY_OUT_VENDOR)/etc/NOTICE.xml.gz \
+    vendor/xiaomi/selene/proprietary/odm/etc/passwd:$(TARGET_COPY_OUT_VENDOR)/etc/passwd \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/android.hardware.se.omapi.uicc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/android.hardware.se.omapi.uicc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos/com.nxp.mifare.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos/com.nxp.mifare.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/android.hardware.se.omapi.uicc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/android.hardware.se.omapi.uicc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_p/com.nxp.mifare.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_p/com.nxp.mifare.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/android.hardware.se.omapi.uicc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/android.hardware.se.omapi.uicc.xml \
+    vendor/xiaomi/selene/proprietary/odm/etc/permissions/sku_eos_u/com.nxp.mifare.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/sku_eos_u/com.nxp.mifare.xml
+
+# ODM vintf - DISABLED: cannot be in PRODUCT_COPY_FILES (Android 11)
+# PRODUCT_COPY_FILES += \
+#     vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_dsds.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest_dsds.xml \
+#     vendor/xiaomi/selene/proprietary/odm/etc/vintf/manifest_selene.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest_selene.xml
 
 # res
 PRODUCT_COPY_FILES += \
