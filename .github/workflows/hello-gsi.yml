@@ -28,16 +28,17 @@ jobs:
 
       - name: Compile hello as /init
         run: |
-          aarch64-linux-gnu-gcc -static -O2 -o hello-gsi/hello-gsi-rootfs/init hello-gsi/hello.c
-          file hello-gsi/hello-gsi-rootfs/init
-          ls -la hello-gsi/hello-gsi-rootfs/init
+          mkdir -p hello-gsi/rootfs/bin
+          aarch64-linux-gnu-gcc -static -O2 -o hello-gsi/rootfs/init hello-gsi/hello.c
+          file hello-gsi/rootfs/init
+          ls -la hello-gsi/rootfs/init
 
       - name: Create initramfs
         run: |
-          cd hello-gsi/hello-gsi-rootfs
+          cd hello-gsi/rootfs
           find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
           cd ..
-          ls -lh hello-gsi/initramfs.cpio.gz
+          ls -lh initramfs.cpio.gz
 
       - name: Create system.img
         run: |
@@ -46,7 +47,7 @@ jobs:
           mkfs.ext4 -F -L system system.img
           TMPDIR=$(mktemp -d)
           sudo mount system.img "$TMPDIR"
-          sudo cp -a hello-gsi-rootfs/* "$TMPDIR"/
+          sudo cp -a rootfs/* "$TMPDIR"/
           sudo mkdir -p "$TMPDIR"/{dev,proc,sys}
           sudo umount "$TMPDIR"
           rmdir "$TMPDIR"
