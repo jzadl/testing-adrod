@@ -264,7 +264,7 @@ jobs:
           export CCACHE_DIR=~/.ccache
           export USE_HOST_LEX=yes
           mka mkbootimg
-          mka hybris-boot -j$(nproc --all)
+          mka halium-boot -j$(nproc --all)
 
       - name: Build system image
         working-directory: halium
