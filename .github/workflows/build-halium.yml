@@ -261,6 +261,18 @@ jobs:
           source build/envsetup.sh
           lunch ${{ env.LUNCH_COMBO }}
 
+      - name: Download initramfs and patch halium-boot
+        working-directory: halium
+        run: |
+          INITRD_URL="https://github.com/halium/initramfs-tools-halium/releases/download/continuous/initrd.img-touch-arm64"
+          INITRD_CACHE="vendor/halium/halium-boot/initrd-cache.img"
+          mkdir -p "$(dirname "$INITRD_CACHE")"
+          curl --location "$INITRD_URL" --output "$INITRD_CACHE" --silent
+          ls -lh "$INITRD_CACHE"
+          printf '#!/bin/bash\nARCH=$1\nTARGET=$2\ncp "$(dirname "$0")/initrd-cache.img" "$TARGET"\necho "Using cached initramfs"\n' \
+            > vendor/halium/halium-boot/get-initrd.sh
+          chmod +x vendor/halium/halium-boot/get-initrd.sh
+
       - name: Build halium-boot
         working-directory: halium
         run: |
