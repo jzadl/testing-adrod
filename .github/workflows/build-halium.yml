@@ -241,11 +241,51 @@ jobs:
             echo "$SOONG_BP not found, skipping"
           fi
 
-      - name: Clone missing halium-boot repo
+      - name: Clone and patch halium-boot repo
         working-directory: halium
         run: |
           git clone --depth=1 https://github.com/Halium/halium-boot.git vendor/halium/halium-boot
           echo "halium-boot cloned"
+
+      - name: Allow disallowed build tools (mkbootimg)
+        working-directory: halium
+        run: |
+          CONFIG="build/soong/ui/build/paths/config.go"
+          if [ -f "$CONFIG" ]; then
+            grep -n "mkbootimg" "$CONFIG" && echo "mkbootimg already allowed" && exit 0
+            # Find the allowed tools list and add mkbootimg
+            python3 << 'PYEOF'
+          path = 'build/soong/ui/build/paths/config.go'
+          with open(path) as f:
+              lines = f.readlines()
+          new_lines = []
+          added = False
+          for line in lines:
+              new_lines.append(line)
+              if not added and '"mke2fs"' in line:
+                  # Add mkbootimg right after mke2fs (alphabetical order)
+                  indent = line[:len(line) - len(line.lstrip())]
+                  new_lines.append(indent + '"mkbootimg",\n')
+                  added = True
+                  print('Added mkbootimg to allowed tools after mke2fs')
+          if not added:
+              # Fallback: find any tool entry and add after it
+              for i, line in enumerate(lines):
+                  if '""' in line and 'Tool' not in line:
+                      indent = line[:len(line) - len(line.lstrip())]
+                      new_lines.insert(i + 1, indent + '"mkbootimg",\n')
+                      added = True
+                      print(f'Added mkbootimg at line {i+1}')
+                      break
+          with open(path, 'w') as f:
+              f.writelines(new_lines)
+          if not added:
+              print('WARNING: Could not find insertion point for mkbootimg')
+          PYEOF
+          else
+            echo "PATHS config not found, patching Android.mk instead"
+            sed -i 's|@mkbootimg|$(HOST_OUT)/bin/mkbootimg|g' vendor/halium/halium-boot/Android.mk
+          fi
 
       - name: Remove broken platform_testing test files
         working-directory: halium
