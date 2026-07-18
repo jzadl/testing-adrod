@@ -1,0 +1,75 @@
+name: Build Hello World GSI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - helloworldgsi
+    paths:
+      - 'hello-gsi/**'
+      - '.github/workflows/hello-gsi.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu cpio
+
+      - name: Compile hello as /init
+        run: |
+          aarch64-linux-gnu-gcc -static -O2 -o hello-gsi/hello-gsi-rootfs/init hello-gsi/hello.c
+          file hello-gsi/hello-gsi-rootfs/init
+          ls -la hello-gsi/hello-gsi-rootfs/init
+
+      - name: Create initramfs
+        run: |
+          cd hello-gsi/hello-gsi-rootfs
+          find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
+          cd ..
+          ls -lh hello-gsi/initramfs.cpio.gz
+
+      - name: Create system.img
+        run: |
+          cd hello-gsi
+          dd if=/dev/zero of=system.img bs=1M count=64 status=progress
+          mkfs.ext4 -F -L system system.img
+          TMPDIR=$(mktemp -d)
+          sudo mount system.img "$TMPDIR"
+          sudo cp -a hello-gsi-rootfs/* "$TMPDIR"/
+          sudo mkdir -p "$TMPDIR"/{dev,proc,sys}
+          sudo umount "$TMPDIR"
+          rmdir "$TMPDIR"
+          ls -lh system.img
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-world-gsi
+          path: |
+            hello-gsi/system.img
+            hello-gsi/initramfs.cpio.gz
+          retention-days: 30
+
+      - name: Create release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Hello World GSI #${{ github.run_number }}"
+          tag_name: "helloworldgsi.${{ github.run_number }}"
+          files: |
+            hello-gsi/system.img
+            hello-gsi/initramfs.cpio.gz
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
