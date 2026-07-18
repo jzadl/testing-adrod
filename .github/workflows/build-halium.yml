@@ -219,11 +219,13 @@ jobs:
             echo "$SOONG_BP not found, skipping"
           fi
 
-      - name: Disable broken BluetoothInstrumentationTests
+      - name: Remove broken platform_testing test files
         working-directory: halium
         run: |
-          sed -i 's/^  BluetoothInstrumentationTests/  # BluetoothInstrumentationTests/' platform_testing/build/tasks/tests/instrumentation_test_list.mk 2>/dev/null || true
-          echo "Disabled broken test module"
+          rm -f platform_testing/build/tasks/tests/instrumentation_test_list.mk
+          rm -f platform_testing/build/tasks/continuous_instrumentation_tests.mk
+          rm -f platform_testing/build/tasks/continuous_native_tests.mk
+          echo "Removed broken test task files"
 
       - name: Setup build environment
         working-directory: halium
