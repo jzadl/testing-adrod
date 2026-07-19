@@ -1,47 +1,68 @@
+//
+// Copyright (C) 2021 The Potato Open Sauce Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_library_shared {
+    name: "libshim_vtservice",
+    srcs: ["libshim_vtservice.cpp"],
+    compile_multilib: "32",
+    shared_libs: [
+        "libaudioclient",
+        "libgui",
+        "libstagefright",
+        "libutils",
+        "libbinder",
+    ],
+    header_libs: [
+        "libaudioclient_headers",
+        "libmedia_headers",
+        "libmediametrics_headers",
+    ],
+}
+
 cc_library_shared {
     name: "libshim_audio",
-    vendor: true,
-    srcs: ["libshim_audio.c"],
-    shared_libs: ["liblog"],
-    compile_multilib: "both",
+    srcs: [
+        "libshim_audio.cpp"
+    ],
+    shared_libs: [
+        "libmedia_helper",
+        "libaudioutils"
+    ],
+    vendor: true
 }
 
 cc_library_shared {
     name: "libshim_beanpod",
-    vendor: true,
     srcs: ["libshim_beanpod.cpp"],
-    shared_libs: ["liblog"],
-    compile_multilib: "both",
-}
-
-cc_library_shared {
-    name: "libshim_vtservice",
     vendor: true,
-    srcs: ["libshim_vtservice.cpp"],
     shared_libs: [
-        "libmedia",
-        "libmedia_omx",
-        "liblog",
-        "libutils",
-        "libcutils",
-        "libgui",
-        "libstagefright",
-        "libsurfaceflinger",
-        "libui",
+        "libkeymaster_messages",
     ],
-    compile_multilib: "32",
+    header_libs: [
+        "libhardware_headers",
+    ],
+    include_dirs: [ "system/keymaster/include" ],
 }
 
 cc_library_shared {
     name: "libshim_showlogo",
-    vendor: true,
     srcs: ["libshim_showlogo.cpp"],
     shared_libs: [
-        "liblog",
-        "libutils",
-        "libgui",
-        "libsurfaceflinger",
         "libui",
+        "libgui",
+        "libutils",
     ],
-    compile_multilib: "64",
+    local_include_dirs: ["include"]
 }
