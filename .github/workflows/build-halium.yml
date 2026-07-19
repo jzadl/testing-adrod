@@ -55,6 +55,14 @@ jobs:
           ccache -M 10G
           echo "CCACHE_DIR=~/.ccache" >> $GITHUB_ENV
 
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-selene-${{ github.run_number }}
+          restore-keys: |
+            ccache-selene-
+
       - name: Configure git identity
         run: |
           git config --global user.email "ci@halium.build"
