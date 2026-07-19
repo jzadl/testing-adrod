@@ -1,0 +1,93 @@
+{
+    "name": "Neutron",
+    "version": "1.0.0",
+    "device": "selene",
+    "device_name": "Xiaomi Redmi 10 2022",
+    "codename": "selene",
+    "vendor": "xiaomi",
+    "android_version": "14",
+    "chipset": "MediaTek Helio G88 (MT6768)",
+    "ram_options": ["4GB", "6GB"],
+    "features": {
+        "display": "90Hz IPS LCD",
+        "panel": "6.58\" 1080x2408"
+    },
+    "tweaks": {
+        "debloat": {
+            "description": "Remove MIUI bloatware and telemetry",
+            "packages": [
+                "com.miui.player",
+                "com.miui.video",
+                "com.miui.gallery",
+                "com.miui.calculator",
+                "com.miui.compass",
+                "com.miui.fm",
+                "com.miui.screenrecorder",
+                "com.miui.weather2",
+                "com.miui.notes",
+                "com.miui.mishare.connectivity",
+                "com.xiaomi.misettings",
+                "com.miui.daemon",
+                "com.miui.hybrid",
+                "com.miui.personalassistant",
+                "com.milink.service",
+                "com.xiaomi.finddevice",
+                "com.miui.miwallpaper",
+                "com.miui.guardprovider",
+                "com.miui.securityadd",
+                "com.google.android.youtube",
+                "com.google.android.music",
+                "com.google.android.videos"
+            ],
+            "services": [
+                "miui.daemon",
+                "miui.analytics",
+                "misight"
+            ]
+        },
+        "perf": {
+            "description": "Performance optimization",
+            "build_prop": {
+                "ro.vendor.qti.cgroup_follow.enable": "1",
+                "persist.sys.NEON": "true",
+                "ro.iorwapd.enable": "false",
+                "debug.sf.latch_unsignaled": "1",
+                "debug.renderengine.backend": "skiagl",
+                "debug.hwui.renderer": "skiagl",
+                "windows.animation.scale": "0.5",
+                "transition.animation.scale": "0.5",
+                "animator.duration.scale": "0.5"
+            }
+        },
+        "battery": {
+            "description": "Battery optimization",
+            "build_prop": {
+                "powersave.enabled": "1",
+                "ro.config.alarm_alert": "vibra.ogg",
+                "ro.ril.power_collapse": "1",
+                "persist.radio.apm_sim_not_pwdn": "1",
+                "deviceidle.disabled": "false",
+                "ro.vendor.qti.cgroup_follow.enable": "1"
+            }
+        },
+        "display": {
+            "description": "Display and rendering tweaks",
+            "build_prop": {
+                "ro.surface_flinger.max_frame_buffer_acquired_buffers": "3",
+                "debug.sf.fps": "90",
+                "debug.sf.latch_unsignaled": "1",
+                "debug.renderengine.backend": "skiagl",
+                "ro.surface_flinger.running_without_sync_framework": "true"
+            }
+        },
+        "memory": {
+            "description": "RAM and ZRAM optimization",
+            "build_prop": {
+                "ro.config.zram": "true",
+                "ro.lmk.critical_upgrade": "true",
+                "ro.lmk.upgrade_pressure": "100",
+                "ro.lmk.downgrade_pressure": "100"
+            }
+        }
+    }
+}
