@@ -1,0 +1,5 @@
+service lights /vendor/bin/hw/android.hardware.light@2.0-service
+    class hal
+    user system
+    group system
+    shutdown critical
