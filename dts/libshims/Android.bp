@@ -1,0 +1,47 @@
+cc_library_shared {
+    name: "libshim_audio",
+    vendor: true,
+    srcs: ["libshim_audio.c"],
+    shared_libs: ["liblog"],
+    compile_multilib: "both",
+}
+
+cc_library_shared {
+    name: "libshim_beanpod",
+    vendor: true,
+    srcs: ["libshim_beanpod.cpp"],
+    shared_libs: ["liblog"],
+    compile_multilib: "both",
+}
+
+cc_library_shared {
+    name: "libshim_vtservice",
+    vendor: true,
+    srcs: ["libshim_vtservice.cpp"],
+    shared_libs: [
+        "libmedia",
+        "libmedia_omx",
+        "liblog",
+        "libutils",
+        "libcutils",
+        "libgui",
+        "libstagefright",
+        "libsurfaceflinger",
+        "libui",
+    ],
+    compile_multilib: "32",
+}
+
+cc_library_shared {
+    name: "libshim_showlogo",
+    vendor: true,
+    srcs: ["libshim_showlogo.cpp"],
+    shared_libs: [
+        "liblog",
+        "libutils",
+        "libgui",
+        "libsurfaceflinger",
+        "libui",
+    ],
+    compile_multilib: "64",
+}

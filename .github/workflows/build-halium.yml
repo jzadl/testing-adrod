@@ -47,7 +47,8 @@ jobs:
             libncurses5-dev libpcre3-dev libsdl1.2-dev libssl-dev \
             libxml2 libxml2-utils lzop pngcrush rsync schedtool \
             squashfs-tools xsltproc zip zlib1g-dev \
-            python3 python-is-python3 repo cpio openjdk-11-jdk
+            python3 python-is-python3 repo cpio openjdk-11-jdk \
+            patchelf
 
       - name: Configure ccache
         run: |
@@ -144,6 +145,56 @@ jobs:
           du -sh "$DEST/"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch vendor blobs with shim libraries
+        working-directory: halium
+        run: |
+          DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
+          echo "Patching vendor blobs..."
+          bash ${{ github.workspace }}/scripts/patch-vendor-blobs.sh "$DEST"
+
+          # Install shim libraries into vendor
+          SHIM_DIR="${{ github.workspace }}/dts/libshims"
+          echo "Installing shim libraries to vendor..."
+          for lib in libshim_audio.so libshim_beanpod.so libshim_showlogo.so libshim_vtservice.so; do
+            # Try 64-bit first
+            if [ -f "$DEST/vendor/lib64/hw/" ] || [ -d "$DEST/vendor/lib64" ]; then
+              find "$DEST" -name "$lib" -exec cp {} "$DEST/vendor/lib64/" \; 2>/dev/null || true
+            fi
+          done
+
+          # Build and install VNDK compat libs (libutils-v32, libui-v32)
+          echo "Setting up VNDK compat libraries..."
+          # Build simple VNDK shims that forward to real libs
+          for arch in lib lib64; do
+            for lib in utils ui; do
+              SHIM_NAME="lib${lib}-v32.so"
+              REAL_LIB=""
+              for p in "$DEST/vendor/$arch" "$DEST/$arch" "$DEST/system/$arch"; do
+                if [ -f "$p/lib${lib}.so" ]; then REAL_LIB="$p/lib${lib}.so"; break; fi
+              done
+              if [ -n "$REAL_LIB" ]; then
+                # Create a symlink shim - the v32 version just wraps the real one
+                mkdir -p "$DEST/vendor/$arch"
+                cp "$REAL_LIB" "$DEST/vendor/$arch/$SHIM_NAME" 2>/dev/null || true
+                echo "  [+] $SHIM_NAME from $REAL_LIB"
+              fi
+            done
+          done
+          ls -la "$DEST/vendor/lib64/" 2>/dev/null | head -20
+          echo "Blob patching complete"
+
+      - name: Install VINTF manifest to vendor
+        working-directory: halium
+        run: |
+          DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
+          # Copy device manifest to vendor
+          mkdir -p "$DEST/etc/vintf/manifest"
+          cp ${{ github.workspace }}/dts/manifest.xml \
+            "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml"
+          echo "VINTF manifest installed"
+          cat "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml" | head -5
+          echo "... ($(wc -l < "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml") lines)"
 
       - name: Filter proprietary-files.txt to only existing blobs
         working-directory: halium
