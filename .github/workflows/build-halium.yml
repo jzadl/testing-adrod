@@ -306,12 +306,34 @@ jobs:
           KERNEL="$(pwd)/out/target/product/${{ env.DEVICE }}/kernel"
           INITRD="$(pwd)/out/target/product/${{ env.DEVICE }}/obj/ROOT/halium-boot_intermediates/halium-initramfs.gz"
           OUTPUT="$(pwd)/out/target/product/${{ env.DEVICE }}/halium-boot.img"
+          DTB="$(pwd)/out/target/product/${{ env.DEVICE }}/dtb"
           if [ ! -f "$MKBOOTIMG" ]; then echo "mkbootimg not found at $MKBOOTIMG"; exit 1; fi
           if [ ! -f "$KERNEL" ]; then echo "kernel not found at $KERNEL"; exit 1; fi
           if [ ! -f "$INITRD" ]; then echo "initrd not found at $INITRD"; exit 1; fi
+          # Extract DTB from Image.gz-dtb (MediaTek: gzipped kernel + raw DTB appended)
+          # The ninja build copies Image.gz-dtb as 'kernel' in the out dir
+          ORIG_KERNEL="$KERNEL"
+          cp "$ORIG_KERNEL" /tmp/kernel_src.gz-dtb
+          python3 -c "
+          import sys
+          with open(sys.argv[1], 'rb') as f:
+              data = f.read()
+          dtb_magic = b'\xd0\x0d\xfe\xed'
+          idx = data.find(dtb_magic)
+          if idx < 0:
+              print('ERROR: DTB magic not found in kernel image')
+              sys.exit(1)
+          with open(sys.argv[2], 'wb') as f:
+              f.write(data[:idx])
+          with open(sys.argv[3], 'wb') as f:
+              f.write(data[idx:])
+          print(f'Split OK: kernel={idx} bytes, dtb={len(data)-idx} bytes')
+          " /tmp/kernel_src.gz-dtb "$KERNEL" "$DTB"
+          echo "Using extracted kernel=$KERNEL dtb=$DTB"
           "$MKBOOTIMG" \
             --kernel "$KERNEL" \
             --ramdisk "$INITRD" \
+            --dtb "$DTB" \
             --base 0x40000000 \
             --pagesize 2048 \
             --cmdline "androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 bootopt=64S3,32N2,64N2 console=tty0 androidboot.selinux=permissive buildvariant=userdebug" \
