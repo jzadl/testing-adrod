@@ -65,7 +65,7 @@ PRODUCT_PACKAGES += \
 
 # Light
 PRODUCT_PACKAGES += \
-    android.hardware.light-service.selene
+    android.hardware.light@2.0-service
 
 # NFC
 PRODUCT_PACKAGES += \
@@ -113,19 +113,15 @@ PRODUCT_PACKAGES += \
 # USB
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.0.vendor \
-    android.hardware.usb@1.1.vendor \
-    android.hardware.usb@1.1-service.selene \
-    android.hardware.usb.gadget@1.1-service.selene
+    android.hardware.usb@1.1.vendor
 
 # Vibrator
 PRODUCT_PACKAGES += \
     android.hardware.vibrator@1.0-impl \
-    android.hardware.vibrator@1.0-service \
-    android.hardware.vibrator-service.mediatek
+    android.hardware.vibrator@1.0-service
 
 # WiFi
 PRODUCT_PACKAGES += \
-    android.hardware.wifi@1.0-service-lazy.selene \
     android.hardware.wifi@1.0.vendor \
     android.hardware.wifi@1.1.vendor \
     android.hardware.wifi@1.2.vendor \
@@ -147,9 +143,9 @@ PRODUCT_PACKAGES += \
     libhidltransport.vendor \
     libhwbinder.vendor
 
-# Fingerprint
+# Fingerprint (AOSP passthrough)
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint@2.1-service.selene
+    android.hardware.biometrics.fingerprint@2.1-service
 
 # Keymaster
 PRODUCT_PACKAGES += \

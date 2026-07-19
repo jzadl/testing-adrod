@@ -7,4 +7,4 @@ persist.service.adb.enable=1
 
 # Display
 persist.vendor.display.color_safe=true
-ro.vendor.display.config.default_fps=60
+ro.vendor.display.config.default_fps=90

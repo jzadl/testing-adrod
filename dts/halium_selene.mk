@@ -16,4 +16,4 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
     BUILD_PRODUCT=selene \
     BUILD_DESCRIPTION=selene-userdebug \
     TARGET_DEVICE=selene \
-    BUILD_FINGERPRINT="Xiaomi/selene/selene:11/RP1A.200720.012/V13.0.9.0.RKUIDNXM:userdebug/test-keys"
+    BUILD_FINGERPRINT="Xiaomi/selene/selene:11/RP1A.200720.012/V12.5.20.0.RKUMIXM:userdebug/test-keys"
