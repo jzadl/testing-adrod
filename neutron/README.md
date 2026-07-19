@@ -4,111 +4,94 @@
 **Android:** 14 (MIUI 14)
 **Chipset:** MediaTek Helio G88 (MT6768)
 
-## Features
+## Tweaks
 
-- **Debloat** - Remove MIUI bloatware and telemetry
-- **Performance** - CPU governor, rendering, animation tweaks
-- **Battery** - Doze, wake locks, power saving
-- **Display** - 90Hz refresh rate, SurfaceFlinger tweaks
-- **Memory** - ZRAM optimization, LMK tuning
+### Debloat
+- com.miui.player
+- com.miui.video
+- com.miui.gallery
+- com.miui.calculator
+- com.miui.compass
+- com.miui.fm
+- com.miui.screenrecorder
+- com.miui.weather2
+- com.miui.notes
+- com.miui.mishare.connectivity
+- com.xiaomi.misettings
+- com.miui.daemon
+- com.miui.hybrid
+- com.miui.personalassistant
+- com.milink.service
+- com.xiaomi.finddevice
+- com.miui.miwallpaper
+- com.miui.guardprovider
+- com.miui.securityadd
+- com.google.android.youtube
+- com.google.android.music
+- com.google.android.videos
+- miui.daemon (service disabled)
+- miui.analytics (service disabled)
+- misight (service disabled)
+
+### Performance
+- ro.vendor.qti.cgroup_follow.enable=1
+- persist.sys.NEON=true
+- ro.iorwapd.enable=false
+- debug.sf.latch_unsignaled=1
+- debug.renderengine.backend=skiagl
+- debug.hwui.renderer=skiagl
+- windows.animation.scale=0.5
+- transition.animation.scale=0.5
+- animator.duration.scale=0.5
+- CPU governor → performance
+- I/O scheduler → bfq
+
+### Battery
+- powersave.enabled=1
+- ro.config.alarm_alert=vibra.ogg
+- ro.ril.power_collapse=1
+- persist.radio.apm_sim_not_pwdn=1
+- deviceidle.disabled=false
+- ro.vendor.qti.cgroup_follow.enable=1
+- Adaptive battery → enabled
+
+### Display
+- ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+- debug.sf.fps=90
+- debug.sf.latch_unsignaled=1
+- debug.renderengine.backend=skiagl
+- ro.surface_flinger.running_without_sync_framework=true
+- peak_refresh_rate → 90Hz
+- min_refresh_rate → 60Hz
+
+### Memory
+- ro.config.zram=true
+- ro.lmk.critical_upgrade=true
+- ro.lmk.upgrade_pressure=100
+- ro.lmk.downgrade_pressure=100
+- ZRAM → 75% of RAM with lz4
+- LMK minfree thresholds optimized
 
 ## Requirements
-
-- Device rooted with Magisk or KernelSU
-- ADB installed on your computer
-- USB debugging enabled
+- Root (Magisk or KernelSU)
+- ADB
 
 ## Usage
 
-### Windows (PowerShell)
+### Windows
 ```powershell
-# Run individual tweaks
-.\windows\debloat.ps1
-.\windows\perf.ps1
-.\windows\battery.ps1
-.\windows\display.ps1
-.\windows\memory.ps1
-
-# Or run all at once
-.\windows\install_all.ps1
-
-# Restore vendor
-.\windows\restore.ps1
+.\neutron\windows\install_all.ps1
 ```
 
-### Linux
+### Linux/macOS
 ```bash
-chmod +x linux/*.sh
-
-# Run individual tweaks
-./linux/debloat.sh
-./linux/perf.sh
-./linux/battery.sh
-./linux/display.sh
-./linux/memory.sh
-
-# Or run all at once
-./linux/install_all.sh
-
-# Restore vendor
-./linux/restore.sh
+./neutron/linux/install_all.sh
+./neutron/macos/install_all.sh
 ```
 
-### macOS
+### Python
 ```bash
-chmod +x macos/*.sh
-
-# Same as Linux
-./macos/install_all.sh
-```
-
-### Python (Cross-platform)
-```bash
-# Interactive menu
-python install.py
-
-# Apply all tweaks
 python install.py --all
-
-# Generate scripts for specific platform
-python install.py --generate windows
-python install.py --generate linux
-python install.py --generate macos
 ```
 
-## Backup
-
-Always backup your vendor partition before applying tweaks:
-```bash
-.\windows\backup.ps1    # Windows
-./linux/backup.sh       # Linux
-```
-
-## Restore
-
-If something goes wrong:
-```bash
-.\windows\restore.ps1   # Windows
-./linux/restore.sh      # Linux
-```
-
-## What Gets Modified
-
-| Tweak | File | Changes |
-|-------|------|---------|
-| Debloat | System apps | Removes bloatware packages |
-| Performance | vendor/build.prop | CPU, GPU, rendering settings |
-| Battery | vendor/build.prop | Power saving, Doze config |
-| Display | vendor/build.prop | 90Hz, SurfaceFlinger |
-| Memory | vendor/build.prop | ZRAM, LMK thresholds |
-
-## Reverting
-
-To restore original vendor partition:
-1. Use SP Flash Tool with stock firmware
-2. Flash only the vendor partition
-3. Or use the restore script if you have a backup
-
-## License
-
-MIT License - Use at your own risk.
+## Made by YEEZUS
