@@ -323,6 +323,23 @@ jobs:
           rm -f platform_testing/build/tasks/continuous_native_tests.mk
           echo "Removed broken test task files"
 
+      - name: Fix bootloader_message offset for no-recovery builds
+        working-directory: halium
+        run: |
+          HEADER="bootable/recovery/bootloader_message/include/bootloader_message/bootloader_message.h"
+          python3 -c "
+          import sys
+          with open('$HEADER', 'r') as f:
+              content = f.read()
+          if 'BOARD_RECOVERY_BLDRMSG_OFFSET' in content and '#define BOARD_RECOVERY_BLDRMSG_OFFSET' not in content:
+              content = '#ifndef BOARD_RECOVERY_BLDRMSG_OFFSET\n#define BOARD_RECOVERY_BLDRMSG_OFFSET 0x00000000\n#endif\n\n' + content
+              with open('$HEADER', 'w') as f:
+                  f.write(content)
+              print('Patched bootloader_message.h with default BOARD_RECOVERY_BLDRMSG_OFFSET')
+          else:
+              print('No patch needed')
+          "
+
       - name: Setup build environment
         working-directory: halium
         run: |
@@ -387,7 +404,7 @@ jobs:
             --dtb "$DTB" \
             --base 0x40000000 \
             --pagesize 2048 \
-            --cmdline "androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 bootopt=64S3,32N2,64N2 console=tty0 androidboot.selinux=permissive buildvariant=userdebug printk.devkmsg=on Tape_and_Glue_Kernel-Made_by_YEEZUS" \
+            --cmdline "androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 bootopt=64S3,32N2,64N2 console=tty0 androidboot.selinux=permissive buildvariant=userdebug printk.devkmsg=on" \
             --kernel_offset 0x00008000 \
             --ramdisk_offset 0x07c80000 \
             --tags_offset 0x0bc80000 \
