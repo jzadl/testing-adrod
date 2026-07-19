@@ -6,7 +6,7 @@ extern "C" {
 void _ZN9keymaster19GenerateKeyResponseD1Ev() {}
 void _ZN9keymaster17AttestKeyResponseD1Ev() {}
 void _ZN9keymaster16ImportKeyRequest14SetKeyMaterialEPKvm(keymaster::ImportKeyRequest* thisptr, const uint8_t* key_material, size_t length) {
-	thisptr->key_data = key_material;
+	thisptr->key_data = const_cast<uint8_t*>(key_material);
 	thisptr->key_data_length = length;
 }
 }

@@ -1,10 +1,9 @@
 #ifndef ANDROID_GUI_DISPLAYCONFIG_H
-#define ANDROID_GUI_DISPLAYCONFIG.h
+#define ANDROID_GUI_DISPLAYCONFIG_H
 
 #include <cstdint>
 
 namespace android {
-namespace ui {
 
 struct DisplayConfig {
     uint32_t width = 0;
@@ -15,7 +14,6 @@ struct DisplayConfig {
     int32_t orientation = 0;
 };
 
-} // namespace ui
 } // namespace android
 
 #endif
