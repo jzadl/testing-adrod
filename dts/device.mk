@@ -190,9 +190,7 @@ PRODUCT_COPY_FILES += \
 
 # Init scripts
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/init.halium.rc:$(TARGET_COPY_OUT_SYSTEM)/etc/init/init.halium.rc \
-    $(LOCAL_PATH)/rootdir/android.hardware.light@2.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/android.hardware.light@2.0-service.rc \
-    $(LOCAL_PATH)/rootdir/android.hardware.biometrics.fingerprint@2.1-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/android.hardware.biometrics.fingerprint@2.1-service.rc
+    $(LOCAL_PATH)/rootdir/init.halium.rc:$(TARGET_COPY_OUT_SYSTEM)/etc/init/init.halium.rc
 
 # Properties
 PRODUCT_COPY_FILES += \
