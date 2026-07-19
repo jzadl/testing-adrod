@@ -35,6 +35,16 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/share/miniconda
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/az_* 2>/dev/null || true
+          sudo rm -rf /opt/az 2>/dev/null || true
+          sudo apt-get clean
           df -h
 
       - name: Install dependencies
@@ -52,7 +62,7 @@ jobs:
 
       - name: Configure ccache
         run: |
-          ccache -M 10G
+          ccache -M 5G
           echo "CCACHE_DIR=~/.ccache" >> $GITHUB_ENV
 
       - name: Restore ccache
@@ -71,13 +81,7 @@ jobs:
       - name: Add swap
         run: |
           sudo swapon --show
-          if ! swapon --show | grep -q /swapfile; then
-            sudo dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
-            sudo chmod 600 /swapfile
-            sudo mkswap /swapfile
-            sudo swapon /swapfile
-          fi
-          free -h
+          df -h
 
       - name: Initialize Halium source tree
         run: |
@@ -420,9 +424,21 @@ jobs:
             --output "$OUTPUT"
           ls -la "$OUTPUT"
 
+      - name: Free disk before systemimage
+        working-directory: halium
+        run: |
+          rm -f /tmp/vendor_a.img 2>/dev/null || true
+          rm -f /tmp/vendor_mnt 2>/dev/null || true
+          rm -rf vendor/halium/halium-boot 2>/dev/null || true
+          rm -rf out/target/product/${{ env.DEVICE }}/obj/ROOT/halium-boot_intermediates 2>/dev/null || true
+          rm -rf out/target/product/${{ env.DEVICE }}/obj/EMBEDDED_INITRAMFS 2>/dev/null || true
+          ccache --show-stats
+          df -h
+
       - name: Build system image
         working-directory: halium
         run: |
+          df -h
           source build/envsetup.sh
           lunch ${{ env.LUNCH_COMBO }}
           export USE_CCACHE=1
