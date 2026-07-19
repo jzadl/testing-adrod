@@ -71,6 +71,7 @@ cc_library_shared {
     name: "libpiex_shim",
     srcs: ["libpiex_shim.cpp"],
     shared_libs: ["liblog"],
+    include_dirs: ["external/piex"],
     vendor: true,
 }
 
