@@ -12,7 +12,9 @@ PRODUCT_PACKAGES += \
     libshim_audio \
     libshim_beanpod \
     libshim_vtservice \
-    libshim_showlogo
+    libshim_showlogo \
+    libpiex_shim \
+    libcamera_metadata_shim
 
 # Audio
 PRODUCT_PACKAGES += \
@@ -215,4 +217,5 @@ PRODUCT_SOONG_NAMESPACES += \
 
 # Symlinks for HAL compatibility
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/gatekeeper_symlinks.sh:$(TARGET_COPY_OUT_VENDOR)/bin/gatekeeper_symlinks.sh
+    $(LOCAL_PATH)/rootdir/gatekeeper_symlinks.sh:$(TARGET_COPY_OUT_VENDOR)/bin/gatekeeper_symlinks.sh \
+    $(LOCAL_PATH)/rootdir/gatekeeper_symlinks.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/gatekeeper_symlinks.rc

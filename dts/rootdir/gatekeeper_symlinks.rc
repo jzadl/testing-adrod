@@ -1,0 +1,2 @@
+on post-fs
+    exec u:r:vendor_init:s0 root root -- /vendor/bin/gatekeeper_symlinks.sh

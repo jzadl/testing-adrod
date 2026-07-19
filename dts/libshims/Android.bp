@@ -66,3 +66,17 @@ cc_library_shared {
     ],
     local_include_dirs: ["include"]
 }
+
+cc_library_shared {
+    name: "libpiex_shim",
+    srcs: ["libpiex_shim.cpp"],
+    shared_libs: ["liblog"],
+    vendor: true,
+}
+
+cc_library_shared {
+    name: "libcamera_metadata_shim",
+    srcs: ["libcamera_metadata_shim.cpp"],
+    shared_libs: ["liblog"],
+    vendor: true,
+}
