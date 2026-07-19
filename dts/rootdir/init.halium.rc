@@ -1,4 +1,9 @@
 # Halium init for Xiaomi Redmi 10 2022 (selene)
+# Tape and Glue Kernel - Made by YEEZUS
+
+on early-init
+    write /proc/sys/kernel/printk "1 4 1 7"
+    write /dev/console "\n\n  ========================================\n   Tape and Glue Kernel\n   Made by YEEZUS\n  ========================================\n\n"
 
 on post-fs-data
     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
