@@ -452,6 +452,17 @@ jobs:
           export USE_HOST_LEX=yes
           mka systemimage -j$(nproc --all) 2>&1 | tee /tmp/build-system.log; exit ${PIPESTATUS[0]}
 
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: halium-${{ env.DEVICE }}-logs-${{ github.run_number }}
+          path: |
+            /tmp/build-system.log
+            /tmp/build-boot.log
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Collect output
         working-directory: halium
         run: |
