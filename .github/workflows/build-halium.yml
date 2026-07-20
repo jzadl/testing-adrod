@@ -472,12 +472,14 @@ jobs:
         shell: bash
         working-directory: halium
         run: |
+          TAG="successful.release.selene.halium11.${{ github.run_number }}"
           for i in 1 2 3 4 5; do
             echo "Attempt $i to create release..."
-            gh release create "successful.release.selene.halium11.${{ github.run_number }}" \
+            gh release delete "$TAG" --repo ${{ github.repository }} --yes --cleanup-tag 2>/dev/null || true
+            sleep 5
+            gh release create "$TAG" \
               --repo ${{ github.repository }} \
               --title "Halium 11 ${{ env.DEVICE }} #${{ github.run_number }}" \
-              --target "${{ github.sha }}" \
               ../out/* \
               --latest && echo "Release created!" && exit 0
             echo "Attempt $i failed, waiting 30s..."
