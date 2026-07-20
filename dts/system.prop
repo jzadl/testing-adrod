@@ -2,7 +2,7 @@
 # Halium 11.0
 
 # Display
-ro.sf.lcd_density=440
+ro.sf.lcd_density=378
 ro.opengles.version=196609
 debug.sf.hw=1
 debug.egl.hw=1
