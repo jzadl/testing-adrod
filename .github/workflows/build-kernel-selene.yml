@@ -113,17 +113,24 @@ jobs:
 
       - name: Create release
         if: steps.build.outcome == 'success'
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Halium Kernel ${{ env.DEVICE }} #${{ github.run_number }}"
-          tag_name: "successful.semirelease.selene.${{ github.run_number }}"
-          files: out/*
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i to create release..."
+            gh release delete "successful.semirelease.selene.${{ github.run_number }}" --yes 2>/dev/null || true
+            gh release create "successful.semirelease.selene.${{ github.run_number }}" \
+              --title "Halium Kernel ${{ env.DEVICE }} #${{ github.run_number }}" \
+              --target "${{ github.sha }}" \
+              out/* \
+              --latest && echo "Release created!" && exit 0
+            echo "Attempt $i failed, waiting 30s..."
+            sleep 30
+          done
+          echo "All release attempts failed"
+          exit 1
 
       - name: Notify Telegram on success
-        if: steps.build.outcome == 'success'
+        if: success() && steps.build.outcome == 'success'
         shell: bash
         run: |
           esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
@@ -188,7 +195,7 @@ jobs:
             -H "Content-Type: application/json" -d @/tmp/tg.json
 
       - name: Notify Telegram on failure
-        if: steps.build.outcome == 'failure'
+        if: failure()
         shell: bash
         run: |
           esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }

@@ -240,12 +240,19 @@ jobs:
       - name: Download prebuilt kernel from latest release
         working-directory: halium
         run: |
-          TAG=$(gh release list --limit=50 --json tagName,name -q '.[] | select(.tagName | test("successful\\.semirelease\\.selene")) | .tagName' 2>/dev/null | head -1)
+          for i in 1 2 3 4 5; do
+            TAG=$(gh release list --limit=50 --json tagName,name -q '.[] | select(.tagName | test("successful\\.semirelease\\.selene")) | .tagName' 2>/dev/null | head -1)
+            if [ -n "$TAG" ]; then
+              echo "Found release: $TAG"
+              break
+            fi
+            echo "Attempt $i: No kernel release found, waiting 30s..."
+            sleep 30
+          done
           if [ -z "$TAG" ]; then
-            echo "ERROR: No successful kernel release found. Run the kernel build first."
+            echo "ERROR: No successful kernel release found after 5 attempts."
             exit 1
           fi
-          echo "Found release: $TAG"
           mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt
           gh release download "$TAG" --pattern "Image.gz-dtb" \
             --dir device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/ 2>&1
@@ -380,8 +387,9 @@ jobs:
           export USE_HOST_LEX=yes
           mka mkbootimg
           # Try ninja halium-boot; if mkbootimg disallowed, build manually
-          mka halium-boot -j$(nproc --all) && exit 0
+          mka halium-boot -j$(nproc --all) 2>&1 | tee /tmp/build-boot.log && exit 0
           echo "ninja halium-boot failed, building manually..."
+          cat /tmp/build-boot.log | tail -20
           MKBOOTIMG="$(pwd)/out/host/linux-x86/bin/mkbootimg"
           KERNEL="$(pwd)/out/target/product/${{ env.DEVICE }}/kernel"
           INITRD="$(pwd)/out/target/product/${{ env.DEVICE }}/obj/ROOT/halium-boot_intermediates/halium-initramfs.gz"
@@ -390,8 +398,6 @@ jobs:
           if [ ! -f "$MKBOOTIMG" ]; then echo "mkbootimg not found at $MKBOOTIMG"; exit 1; fi
           if [ ! -f "$KERNEL" ]; then echo "kernel not found at $KERNEL"; exit 1; fi
           if [ ! -f "$INITRD" ]; then echo "initrd not found at $INITRD"; exit 1; fi
-          # Extract DTB from Image.gz-dtb (MediaTek: gzipped kernel + raw DTB appended)
-          # The ninja build copies Image.gz-dtb as 'kernel' in the out dir
           ORIG_KERNEL="$KERNEL"
           cp "$ORIG_KERNEL" /tmp/kernel_src.gz-dtb
           python3 -c "
@@ -444,7 +450,7 @@ jobs:
           export USE_CCACHE=1
           export CCACHE_DIR=~/.ccache
           export USE_HOST_LEX=yes
-          mka systemimage -j$(nproc --all)
+          mka systemimage -j$(nproc --all) 2>&1 | tee /tmp/build-system.log; exit ${PIPESTATUS[0]}
 
       - name: Collect output
         working-directory: halium
@@ -463,12 +469,22 @@ jobs:
 
       - name: Create release
         if: success()
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Halium 11 ${{ env.DEVICE }} #${{ github.run_number }}"
-          tag_name: "successful.release.selene.halium11.${{ github.run_number }}"
-          files: out/*
-          make_latest: true
+        shell: bash
+        working-directory: halium
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i to create release..."
+            gh release create "successful.release.selene.halium11.${{ github.run_number }}" \
+              --repo ${{ github.repository }} \
+              --title "Halium 11 ${{ env.DEVICE }} #${{ github.run_number }}" \
+              --target "${{ github.sha }}" \
+              ../out/* \
+              --latest && echo "Release created!" && exit 0
+            echo "Attempt $i failed, waiting 30s..."
+            sleep 30
+          done
+          echo "All release attempts failed"
+          exit 1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -521,12 +537,29 @@ jobs:
           REF="${{ github.ref_name }}"
           SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
           COMMIT_MSG=$(git log -1 --format=%s 2>/dev/null | esc || echo "N/A")
+
+          # Extract error from build log
+          ERRORS=""
+          for LOGFILE in /tmp/build-system.log /tmp/build-boot.log; do
+            if [ -f "$LOGFILE" ]; then
+              FOUND=$(grep -E "FAILED:|error:" "$LOGFILE" 2>/dev/null | tail -10 | esc)
+              if [ -n "$FOUND" ]; then
+                ERRORS="$FOUND"
+                break
+              fi
+            fi
+          done
+          if [ -z "$ERRORS" ]; then
+            ERRORS="Check the run log for details."
+          fi
+
           printf -v MSG '%s\n' \
-            "❌ <b>Halium 11 Build for Selene #$RUN FAILED</b>" \
+            "❌ <b>Halium 11 Build #$RUN FAILED</b>" \
             "" \
-            "<b>Device:</b> Xiaomi Redmi 10 2022 (selene)" \
             "<b>Commit:</b> <code>$SHA_SHORT</code> $COMMIT_MSG" \
-            "<b>Triggered by:</b> $ACTOR on $REF" \
+            "" \
+            "<b>Error:</b>" \
+            "<code>$ERRORS</code>" \
             "" \
             "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">View run</a>"
           jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
