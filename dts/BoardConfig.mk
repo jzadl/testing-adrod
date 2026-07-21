@@ -34,7 +34,7 @@ BOARD_MKBOOTIMG_ARGS := \
     --kernel_offset $(BOARD_KERNEL_OFFSET) \
     --ramdisk_offset $(BOARD_RAMDISK_OFFSET) \
     --tags_offset $(BOARD_TAGS_OFFSET) \
-    --header_version 2
+    --header_version 0
 
 BOARD_KERNEL_CMDLINE := \
     androidboot.hardware=selene \
