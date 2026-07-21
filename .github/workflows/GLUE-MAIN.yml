@@ -345,17 +345,32 @@ jobs:
           CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
           BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
           RUN="${{ github.run_number }}"
+          URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{\"chat_id\":\"$CHAT\",\"text\":\"GLUE-MAIN #$RUN OK\",\"parse_mode\":\"HTML\"}"
+            -d "{\"chat_id\":\"$CHAT\",\"text\":\"✅ GLUE-MAIN #$RUN OK\n\n$URL\",\"parse_mode\":\"HTML\"}"
 
       - name: Notify Telegram on failure
         if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
           BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
           RUN="${{ github.run_number }}"
-          ERRORS=$(grep -E "FAILED:|error:" /tmp/build-system.log 2>/dev/null | tail -10 || echo "Check logs")
+          URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ERRORS=""
+          if [ -f /tmp/build-system.log ]; then
+            ERRORS=$(grep -E "FAILED:|error:" /tmp/build-system.log 2>/dev/null | tail -5)
+          fi
+          if [ -z "$ERRORS" ]; then
+            ERRORS=$(gh run view ${{ github.run_id }} --repo ${{ github.repository }} --log-failed 2>/dev/null | grep -E "FAILED:|error:|Error|FAILED" | tail -5 || echo "")
+          fi
+          if [ -z "$ERRORS" ]; then
+            ERRORS="No specific error captured. Check the run log."
+          fi
+          TEXT="❌ GLUE-MAIN #$RUN FAILED%0A%0A${ERRORS}%0A%0A$URL"
+          TEXT=$(echo "$TEXT" | sed 's/"/\\"/g')
           curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{\"chat_id\":\"$CHAT\",\"text\":\"GLUE-MAIN #$RUN FAILED\n\n$ERRORS\",\"parse_mode\":\"HTML\"}"
+            -d "{\"chat_id\":\"$CHAT\",\"text\":\"❌ GLUE-MAIN #$RUN FAILED\n\n$ERRORS\n\n$URL\"}"
