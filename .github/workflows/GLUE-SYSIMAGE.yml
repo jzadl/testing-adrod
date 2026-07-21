@@ -49,9 +49,7 @@ jobs:
             repo cpio openjdk-11-jdk patchelf
 
       - name: Configure ccache
-        run: |
-          ccache -M 5G
-          echo "CCACHE_DIR=~/.ccache" >> $GITHUB_ENV
+        run: ccache -M 5G
 
       - name: Restore ccache
         uses: actions/cache@v4
@@ -195,13 +193,10 @@ jobs:
           python3 - << 'PYEOF'
           import re
           try:
-              with open('build/core/node_fns.mk', 'r') as f:
-                  content = f.read()
+              with open('build/core/node_fns.mk', 'r') as f: content = f.read()
               content = re.sub(r'\$\(error import of "\$\(2\)" failed\)', '', content)
-              with open('build/core/node_fns.mk', 'w') as f:
-                  f.write(content)
-          except FileNotFoundError:
-              pass
+              with open('build/core/node_fns.mk', 'w') as f: f.write(content)
+          except FileNotFoundError: pass
           PYEOF
 
       - name: Fix Soong Make variables
@@ -210,11 +205,9 @@ jobs:
           if [ -f "vendor/lineage/build/soong/Android.bp" ]; then
             python3 - << 'PYEOF'
             import re
-            with open('vendor/lineage/build/soong/Android.bp') as f:
-                c = f.read()
+            with open('vendor/lineage/build/soong/Android.bp') as f: c = f.read()
             c2 = re.sub(r'\$\([A-Z_]+\)', '', c)
-            with open('vendor/lineage/build/soong/Android.bp', 'w') as f:
-                f.write(c2)
+            with open('vendor/lineage/build/soong/Android.bp', 'w') as f: f.write(c2)
             PYEOF
           fi
 
@@ -243,27 +236,19 @@ jobs:
         run: |
           HEADER="bootable/recovery/bootloader_message/include/bootloader_message/bootloader_message.h"
           python3 -c "
-          with open('$HEADER', 'r') as f:
-              content = f.read()
+          with open('$HEADER', 'r') as f: content = f.read()
           if 'BOARD_RECOVERY_BLDRMSG_OFFSET' in content and '#define BOARD_RECOVERY_BLDRMSG_OFFSET' not in content:
               content = '#ifndef BOARD_RECOVERY_BLDRMSG_OFFSET\n#define BOARD_RECOVERY_BLDRMSG_OFFSET 0x00000000\n#endif\n\n' + content
-              with open('$HEADER', 'w') as f:
-                  f.write(content)
+              with open('$HEADER', 'w') as f: f.write(content)
           "
-
-      - name: Setup build environment
-        working-directory: halium
-        run: |
-          source build/envsetup.sh
-          lunch ${{ env.LUNCH_COMBO }}
 
       - name: Download initramfs
         working-directory: halium
         run: |
-          INITRD_URL="https://github.com/halium/initramfs-tools-halium/releases/download/continuous/initrd.img-touch-arm64"
           INITRD_CACHE="vendor/halium/halium-boot/initrd-cache.img"
           mkdir -p "$(dirname "$INITRD_CACHE")"
-          curl --location "$INITRD_URL" --output "$INITRD_CACHE" --silent
+          curl --location "https://github.com/halium/initramfs-tools-halium/releases/download/continuous/initrd.img-touch-arm64" \
+            --output "$INITRD_CACHE" --silent
           printf '#!/bin/bash\nARCH=$1\nTARGET=$2\ncp "$(dirname "$0")/initrd-cache.img" "$TARGET"\necho "Using cached initramfs"\n' > vendor/halium/halium-boot/get-initrd.sh
           chmod +x vendor/halium/halium-boot/get-initrd.sh
 
@@ -292,6 +277,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          sudo ln -sf ~/bin/repo /usr/bin/repo
+
+      - name: Configure git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
       - name: Configure crave CLI
         run: |
           mkdir -p ${HOME}/bin/
@@ -304,27 +301,31 @@ jobs:
           CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
           CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
 
-      - name: Sync Crave project and build systemimage
+      - name: Create project folder and crave.yaml
         run: |
           mkdir -p ${{ env.PROJECTFOLDER }}/.repo/manifests
           cp configs/crave/crave.yaml.aosp ${{ env.PROJECTFOLDER }}/.repo/manifests/crave.yaml
           cp crave.conf ${{ env.PROJECTFOLDER }}/
-          cd ${{ env.PROJECTFOLDER }}
-          repo init -u https://github.com/Halium/android -b ${{ env.HALIUM_VERSION }} --depth=1
 
+      - name: Initialize repo (local, no sync)
+        working-directory: ${{ env.PROJECTFOLDER }}
+        run: repo init -u https://github.com/accupara/los18.1.git -b lineage-18.1 --depth=1
+
+      - name: Build systemimage via crave run
+        working-directory: ${{ env.PROJECTFOLDER }}
+        run: |
           crave ${{ secrets.CRAVE_FLAGS }} run --no-patch -- '
             set -ex
 
-            # Clone testing-adrod to get our device tree, vendor, scripts
+            # Re-init to Halium (unsupported ROM on LOS 18.1 base)
+            repo init -u https://github.com/Halium/android -b halium-11.0 --depth=1
+
+            # Resync with conflict resolution
+            /opt/crave/resync.sh
+
+            # Clone testing-adrod for device tree, vendor, scripts
             git clone --depth=1 -b halium-selene https://github.com/${{ github.repository }}.git /tmp/adrod
             ADROD=/tmp/adrod
-
-            # Sync sources
-            if [ -f /usr/bin/resync ]; then
-              /usr/bin/resync
-            else
-              repo sync -c -j$(nproc --all) --no-tags --force-sync
-            fi
 
             # Place device tree
             mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}
@@ -336,13 +337,23 @@ jobs:
             cp $ADROD/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor.mk vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
             cp $ADROD/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
 
+            # Download prebuilt kernel from GitHub releases (public, no auth needed)
+            KTAG=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases | python3 -c "import sys,json; rels=json.load(sys.stdin); print([r[\"tag_name\"] for r in rels if \"semirelease\" in r.get(\"tag_name\",\"\")][0])" 2>/dev/null || echo "")
+            if [ -z "$KTAG" ]; then echo "No kernel release found"; exit 1; fi
+            mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt
+            wget -q "https://github.com/${{ github.repository }}/releases/download/${KTAG}/Image.gz-dtb" \
+              -O device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/Image.gz-dtb
+
+            # Download vendor_a.img from GitHub releases
+            wget -q "https://github.com/${{ github.repository }}/releases/download/vendor-blobs-selene/vendor_a.img" \
+              -O /tmp/vendor_a.img || true
+
             # Extract vendor blobs
-            mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
-            gh release download vendor-blobs-selene --pattern vendor_a.img --dir /tmp/ 2>&1 || true
             if [ -f /tmp/vendor_a.img ]; then
-              sudo mkdir -p /tmp/vendor_mnt
+              mkdir -p /tmp/vendor_mnt
               sudo mount -o ro,loop /tmp/vendor_a.img /tmp/vendor_mnt
               DEST=vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
+              mkdir -p $DEST
               while IFS= read -r line; do
                 [ -z "$line" ] && continue
                 [[ "$line" =~ ^# ]] && continue
@@ -386,16 +397,6 @@ jobs:
 
             # Generate vendor makefile
             python3 $ADROD/scripts/generate_vendor_mk.py "$PROP" vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor-files.mk
-
-            # Download prebuilt kernel
-            for i in 1 2 3 4 5; do
-              TAG=$(gh release list --limit=50 --json tagName,name -q ".[] | select(.tagName | test(\"successful\\.semirelease\\.selene\")) | .tagName" 2>/dev/null | head -1)
-              if [ -n "$TAG" ]; then break; fi
-              sleep 30
-            done
-            if [ -z "$TAG" ]; then echo "No kernel release"; exit 1; fi
-            mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt
-            gh release download "$TAG" --pattern "Image.gz-dtb" --dir device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/
 
             # Clone MTK sepolicy
             git clone --depth=1 -b eleven https://github.com/PixelExperience/device_mediatek_sepolicy_vndr.git device/mediatek/sepolicy_vndr 2>/dev/null || true
@@ -444,14 +445,10 @@ jobs:
             make installclean
             mka systemimage -j$(nproc --all)
           '
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
-          CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
 
       - name: Pull system image from Crave
+        working-directory: ${{ env.PROJECTFOLDER }}
         run: |
-          cd ${{ env.PROJECTFOLDER }}
           crave pull out/target/product/${{ env.DEVICE }}/system.img
           mkdir -p ${{ github.workspace }}/out
           cp out/target/product/${{ env.DEVICE }}/system.img ${{ github.workspace }}/out/
