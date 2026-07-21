@@ -13,7 +13,6 @@ on:
 
 env:
   DEVICE: selene
-  CODENAME: selene
   VENDOR: xiaomi
   LUNCH_COMBO: halium_selene-userdebug
   HALIUM_VERSION: halium-11.0
@@ -22,15 +21,12 @@ env:
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   build-halium-boot:
     name: Build halium-boot on GitHub Actions
     runs-on: ubuntu-22.04
     timeout-minutes: 360
-    outputs:
-      artifact-name: halium-boot-${{ env.DEVICE }}-${{ github.run_number }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,13 +42,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            bc bison build-essential ccache curl flex git-core gnupg gperf \
-            imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool \
-            libncurses5 libncurses5-dev libpcre3-dev libsdl1.2-dev libssl-dev \
-            libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools \
-            xsltproc zip zlib1g-dev python3 python-is-python3 repo cpio \
-            openjdk-11-jdk patchelf
+          sudo apt-get install -y bc bison build-essential ccache curl flex git-core gnupg gperf \
+            imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5 \
+            libncurses5-dev libpcre3-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop \
+            pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3 python-is-python3 \
+            repo cpio openjdk-11-jdk patchelf
 
       - name: Configure ccache
         run: |
@@ -64,8 +58,7 @@ jobs:
         with:
           path: ~/.ccache
           key: ccache-selene-${{ github.run_number }}
-          restore-keys: |
-            ccache-selene-
+          restore-keys: ccache-selene-
 
       - name: Configure git identity
         run: |
@@ -115,7 +108,6 @@ jobs:
           rm -f /tmp/vendor_a.img
           sudo chown -R $(id -u):$(id -g) "$DEST/"
           sudo chmod -R u+rwx "$DEST/"
-          rm -rf "$DEST/lost+found"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -228,8 +220,7 @@ jobs:
 
       - name: Clone halium-boot repo
         working-directory: halium
-        run: |
-          git clone --depth=1 https://github.com/Halium/halium-boot.git vendor/halium/halium-boot
+        run: git clone --depth=1 https://github.com/Halium/halium-boot.git vendor/halium/halium-boot
 
       - name: Allow mkbootimg
         working-directory: halium
@@ -238,7 +229,6 @@ jobs:
           if [ -f "$CONFIG" ]; then
             grep -c "mkbootimg" "$CONFIG" && exit 0
             sed -i '/"mke2fs"/a\        "mkbootimg",' "$CONFIG" 2>/dev/null || true
-            sed -i '/mke2fs/a\        mkbootimg,' "$CONFIG" 2>/dev/null || true
           fi
 
       - name: Remove broken test files
@@ -282,76 +272,21 @@ jobs:
         run: |
           source build/envsetup.sh
           lunch ${{ env.LUNCH_COMBO }}
-          export USE_CCACHE=1
-          export CCACHE_DIR=~/.ccache
-          export USE_HOST_LEX=yes
+          export USE_CCACHE=1 CCACHE_DIR=~/.ccache USE_HOST_LEX=yes
           mka mkbootimg
           mka halium-boot -j$(nproc --all)
-
-      - name: Collect and upload halium-boot
-        working-directory: halium
-        run: |
-          mkdir -p ../out
-          cp out/target/product/${{ env.DEVICE }}/halium-boot.img ../out/
-          ls -la ../out/
 
       - name: Upload halium-boot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: halium-boot-${{ env.DEVICE }}-${{ github.run_number }}
-          path: out/halium-boot.img
+          name: halium-boot-${{ github.run_number }}
+          path: halium/out/target/product/${{ env.DEVICE }}/halium-boot.img
           retention-days: 7
-
-  start-crave-runner:
-    name: Start Crave self-hosted runner
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install tmux
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y tmux
-
-      - name: Configure crave CLI
-        run: |
-          if [[ $DCDEVSPACE == *1* ]]; then
-            echo 'Already in devspace'
-          else
-            mkdir -p ${HOME}/bin/
-            curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
-            mv ${PWD}/crave ${HOME}/bin/
-            sudo ln -sf /home/${USER}/bin/crave /usr/bin/crave
-            envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
-          fi
-        env:
-          CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
-          CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
-
-      - name: Start Crave devspace runner
-        run: |
-          crave ${{ secrets.CRAVE_FLAGS }} devspace -- "
-            if [ -f actions-runner/run.sh ]; then
-              echo 'Runner found. Restarting...'
-            else
-              echo 'Error: Runner not found. Run Configure Crave Runner workflow first.'
-              exit 1
-            fi
-            if tmux has-session -t ghactions; then
-              echo 'Runner already running'
-            else
-              tmux kill-session -t ghactions 2>/dev/null || true
-              tmux new-session -d -s ghactions
-              tmux send-keys -t ghactions './actions-runner/run.sh' Enter
-              echo 'Runner started'
-            fi
-          "
 
   build-systemimage:
     name: Build systemimage on Crave
-    runs-on: self-hosted
-    needs: [build-halium-boot, start-crave-runner]
+    runs-on: ubuntu-22.04
+    needs: build-halium-boot
     timeout-minutes: 1440
     steps:
       - name: Checkout repository
@@ -360,29 +295,168 @@ jobs:
       - name: Download halium-boot artifact
         uses: actions/download-artifact@v4
         with:
-          name: halium-boot-${{ env.DEVICE }}-${{ github.run_number }}
+          name: halium-boot-${{ github.run_number }}
           path: out/
 
-      - name: Build systemimage via Crave
+      - name: Configure crave CLI
         run: |
-          chmod +x scripts/build-systemimage-crave.sh
-          export TESTING_ADROD_DIR="${{ github.workspace }}"
-          export PROJECTFOLDER="${{ env.PROJECTFOLDER }}"
-          export PROJECTID="${{ env.PROJECTID }}"
-          export DEVICE="${{ env.DEVICE }}"
-          export VENDOR="${{ env.VENDOR }}"
-          export LUNCH_COMBO="${{ env.LUNCH_COMBO }}"
-          export HALIUM_VERSION="${{ env.HALIUM_VERSION }}"
-          bash scripts/build-systemimage-crave.sh
+          mkdir -p ${HOME}/bin/
+          curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
+          mv ${PWD}/crave ${HOME}/bin/
+          sudo ln -sf /home/${USER}/bin/crave /usr/bin/crave
+          envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
+          rm -rf ${PWD}/crave.conf.sample
+        env:
+          CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
+          CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
+
+      - name: Create project folder
+        run: |
+          mkdir -p $PROJECTFOLDER/.repo/manifests
+          cp configs/crave/crave.yaml.aosp $PROJECTFOLDER/.repo/manifests/crave.yaml
+          cp crave.conf $PROJECTFOLDER/
+
+      - name: Initialize repo and run build via crave
+        run: |
+          cd $PROJECTFOLDER
+          repo init -u https://github.com/Halium/android -b ${{ env.HALIUM_VERSION }} --depth=1
+
+          crave ${{ secrets.CRAVE_FLAGS }} run --no-patch -- "
+            set -e
+
+            # Sync sources
+            if [ -f /usr/bin/resync ]; then
+              /usr/bin/resync
+            else
+              /opt/crave/resync.sh
+            fi
+
+            # Place device tree
+            mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}
+            cp -r ${{ github.workspace }}/dts/* device/${{ env.VENDOR }}/${{ env.DEVICE }}/
+
+            # Place vendor files
+            mkdir -p vendor/${{ env.VENDOR }}/${{ env.DEVICE }}
+            cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+            cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor.mk vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+            cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
+
+            # Extract vendor blobs
+            gh release download vendor-blobs-selene --pattern vendor_a.img --dir /tmp/ 2>&1
+            sudo mkdir -p /tmp/vendor_mnt
+            sudo mount -o ro,loop /tmp/vendor_a.img /tmp/vendor_mnt
+            DEST=vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary
+            mkdir -p \$DEST
+            while IFS= read -r line; do
+              [[ -z \"\$line\" || \"\$line\" =~ ^# || \"\$line\" =~ ^- ]] && continue
+              src_path=\${line%%|*}
+              [[ \"\$src_path\" == */vintf/* || \"\$src_path\" == *.apk || \"\$src_path\" == *.jar ]] && continue
+              src_full=/tmp/vendor_mnt/\$src_path
+              dst_full=\$DEST/\$src_path
+              if [ -f \"\$src_full\" ]; then
+                mkdir -p \$(dirname \"\$dst_full\")
+                cp \"\$src_full\" \"\$dst_full\"
+              fi
+            done < vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt
+            sudo umount /tmp/vendor_mnt
+            rm -f /tmp/vendor_a.img
+            sudo chown -R \$(id -u):\$(id -g) \$DEST/
+            sudo chmod -R u+rwx \$DEST/
+            rm -rf \$DEST/lost+found
+
+            # Patch vendor blobs
+            bash ${{ github.workspace }}/scripts/patch-vendor-blobs.sh \$DEST
+
+            # Install VINTF manifest
+            mkdir -p \$DEST/etc/vintf/manifest
+            cp ${{ github.workspace }}/dts/manifest.xml \$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml
+
+            # Filter proprietary-files.txt
+            PROP=vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary-files.txt
+            FILTERED=\$(mktemp)
+            while IFS= read -r line; do
+              [[ -z \"\$line\" || \"\$line\" == \\#* ]] && echo \"\$line\" >> \"\$FILTERED\" && continue
+              [[ \"\$line\" == -* ]] && echo \"\$line\" >> \"\$FILTERED\" && continue
+              src=\${line%%|*}
+              if [ -f \"\$DEST/\$src\" ]; then echo \"\$line\" >> \"\$FILTERED\"; fi
+            done < \"\$PROP\"
+            cp \"\$FILTERED\" \"\$PROP\"
+            rm \"\$FILTERED\"
+
+            # Generate vendor makefile
+            python3 ${{ github.workspace }}/scripts/generate_vendor_mk.py \$PROP vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/selene-vendor-files.mk
+
+            # Download prebuilt kernel
+            for i in 1 2 3 4 5; do
+              TAG=\$(gh release list --limit=50 --json tagName,name -q '.[] | select(.tagName | test(\"successful\\\\.semirelease\\\\.selene\")) | .tagName' 2>/dev/null | head -1)
+              if [ -n \"\$TAG\" ]; then break; fi
+              sleep 30
+            done
+            mkdir -p device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt
+            gh release download \"\$TAG\" --pattern Image.gz-dtb --dir device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/
+
+            # Clone MTK sepolicy
+            git clone --depth=1 -b eleven https://github.com/PixelExperience/device_mediatek_sepolicy_vndr.git device/mediatek/sepolicy_vndr 2>/dev/null || true
+
+            # Apply Hybris patches
+            ./hybris-patches/apply-patches.sh --mb
+
+            # Patch import-namespace
+            python3 -c \"
+            import re
+            try:
+                with open('build/core/node_fns.mk','r') as f: c=f.read()
+                c=re.sub(r'\\\\\\$\\\\(error import of \\\\\\\"\\\\\\$\\\\(2\\\\)\\\\\\\" failed\\\\\\)','',c)
+                with open('build/core/node_fns.mk','w') as f: f.write(c)
+            except: pass
+            \"
+
+            # Fix Soong
+            if [ -f vendor/lineage/build/soong/Android.bp ]; then
+              python3 -c \"
+              import re
+              with open('vendor/lineage/build/soong/Android.bp') as f: c=f.read()
+              c2=re.sub(r'\\\\\\$\\\\([A-Z_]+\\\\)','',c)
+              with open('vendor/lineage/build/soong/Android.bp','w') as f: f.write(c2)
+              \"
+            fi
+
+            # Remove broken test files
+            rm -f platform_testing/build/tasks/tests/instrumentation_test_list.mk
+            rm -f platform_testing/build/tasks/continuous_instrumentation_tests.mk
+            rm -f platform_testing/build/tasks/continuous_native_tests.mk
+
+            # Patch bootloader_message
+            HEADER=bootable/recovery/bootloader_message/include/bootloader_message/bootloader_message.h
+            python3 -c \"
+            with open('\$HEADER','r') as f: c=f.read()
+            if 'BOARD_RECOVERY_BLDRMSG_OFFSET' in c and '#define BOARD_RECOVERY_BLDRMSG_OFFSET' not in c:
+                c='#ifndef BOARD_RECOVERY_BLDRMSG_OFFSET\\\\n#define BOARD_RECOVERY_BLDRMSG_OFFSET 0x00000000\\\\n#endif\\\\n\\\\n'+c
+                with open('\$HEADER','w') as f: f.write(c)
+            \"
+
+            # Build systemimage
+            export USE_CCACHE=1 CCACHE_DIR=~/.ccache USE_HOST_LEX=yes
+            source build/envsetup.sh
+            lunch ${{ env.LUNCH_COMBO }}
+            make installclean
+            mka systemimage -j\$(nproc --all)
+          "
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
           CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
 
+      - name: Pull system image from Crave
+        run: |
+          cd $PROJECTFOLDER
+          crave pull out/target/product/${{ env.DEVICE }}/system.img
+          cp out/target/product/${{ env.DEVICE }}/system.img ${{ github.workspace }}/out/
+
       - name: Upload systemimage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: systemimage-${{ env.DEVICE }}-${{ github.run_number }}
+          name: systemimage-${{ github.run_number }}
           path: out/system.img
           retention-days: 7
 
@@ -395,7 +469,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: out/
-          pattern: '*-${{ env.DEVICE }}-${{ github.run_number }}'
           merge-multiple: true
 
       - name: Create release
@@ -404,11 +477,9 @@ jobs:
           for i in 1 2 3 4 5; do
             gh release delete "$TAG" --repo ${{ github.repository }} --yes --cleanup-tag 2>/dev/null || true
             sleep 5
-            gh release create "$TAG" \
-              --repo ${{ github.repository }} \
+            gh release create "$TAG" --repo ${{ github.repository }} \
               --title "Halium 11 ${{ env.DEVICE }} #${{ github.run_number }}" \
-              out/* \
-              --latest && exit 0
+              out/* --latest && exit 0
             sleep 30
           done
           exit 1
@@ -421,11 +492,7 @@ jobs:
           CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
           BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
           RUN="${{ github.run_number }}"
-          if [ "${{ job.status }}" = "success" ]; then
-            MSG="GLUE-SYSIMAGE #$RUN OK"
-          else
-            MSG="GLUE-SYSIMAGE #$RUN FAILED"
-          fi
+          MSG="GLUE-SYSIMAGE #$RUN ${{ job.status }}"
           curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{\"chat_id\":\"$CHAT\",\"text\":\"$MSG\",\"parse_mode\":\"HTML\"}"
+            -d "{\"chat_id\":\"$CHAT\",\"text\":\"$MSG\"}"
