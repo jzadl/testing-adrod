@@ -23,7 +23,6 @@ env:
 permissions:
   contents: write
   actions: write
-  administration: write
 
 jobs:
   build-halium-boot:
