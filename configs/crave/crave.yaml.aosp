@@ -1,0 +1,17 @@
+# Crave configuration template for AOSP/ROM builds
+# ignoreClientHostname keeps workspace persistence across client machines
+
+LOS 18.1:
+  ignoreClientHostname: true
+
+LOS 20:
+  ignoreClientHostname: true
+
+LOS 21:
+  ignoreClientHostname: true
+
+LOS 22:
+  ignoreClientHostname: true
+
+AOSP:
+  ignoreClientHostname: true

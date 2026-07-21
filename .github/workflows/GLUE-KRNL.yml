@@ -1,4 +1,4 @@
-name: Build Halium Kernel for Selene (Redmi 10 2022)
+name: GLUE-KERNEL
 
 on:
   workflow_dispatch:

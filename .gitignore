@@ -1,0 +1,30 @@
+# Crave configuration (contains API secrets)
+crave.conf
+
+# Local build outputs
+out/
+halium/
+build-output/
+build-log/
+*.log
+*.zip
+
+# Firmware and temporary files
+_fw/
+_tmp_log.txt
+
+# Python scripts used for debugging vendor extraction
+brute_scan.py
+check_entropy.py
+create_test_workflow.sh
+debug_vendor_*.sh
+extract_vendor.py
+find_vendor.py
+fine_scan.py
+gen_vendor_mk.py
+identify_partitions.py
+parse_*.py
+scan_*.py
+unpack_sparse.py
+vendor_*_test.py
+vtest.py

@@ -1,4 +1,4 @@
-name: Build Halium 11 for Selene (Redmi 10 2022)
+name: GLUE-HBOOT
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
       - 'dts/**'
       - 'vendor/**'
       - 'scripts/**'
-      - '.github/workflows/build-halium.yml'
+      - '.github/workflows/GLUE-HBOOT.yml'
 
 env:
   DEVICE: selene
@@ -78,11 +78,6 @@ jobs:
           git config --global user.email "ci@halium.build"
           git config --global user.name "Halium CI"
 
-      - name: Add swap
-        run: |
-          sudo swapon --show
-          df -h
-
       - name: Initialize Halium source tree
         run: |
           mkdir -p halium && cd halium
@@ -103,9 +98,6 @@ jobs:
           cp ${{ github.workspace }}/vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/BoardConfigVendor.mk \
             vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/ 2>/dev/null || true
 
-          echo "Device tree placed:"
-          ls device/${{ env.VENDOR }}/${{ env.DEVICE }}/
-
       - name: Extract vendor blobs (filtered by proprietary-files.txt)
         working-directory: halium
         run: |
@@ -122,20 +114,14 @@ jobs:
           DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
           mkdir -p "$DEST"
 
-          # Copy only files listed in proprietary-files.txt
           COPIED=0
           MISSING=0
           while IFS= read -r line; do
-            # Skip comments, empty lines, system files (-), hash suffixes
             [[ -z "$line" || "$line" =~ ^# || "$line" =~ ^- ]] && continue
             src_path="${line%%|*}"
-            
-            # Skip VINTF and APK files
             [[ "$src_path" == *"/vintf/"* || "$src_path" == *".apk" || "$src_path" == *".jar" ]] && continue
-            
             src_full="/tmp/vendor_mnt/$src_path"
             dst_full="$DEST/$src_path"
-            
             if [ -f "$src_full" ]; then
               mkdir -p "$(dirname "$dst_full")"
               cp "$src_full" "$dst_full"
@@ -162,22 +148,15 @@ jobs:
         working-directory: halium
         run: |
           DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
-          echo "Patching vendor blobs..."
           bash ${{ github.workspace }}/scripts/patch-vendor-blobs.sh "$DEST"
 
-          # Install shim libraries into vendor
           SHIM_DIR="${{ github.workspace }}/dts/libshims"
-          echo "Installing shim libraries to vendor..."
           for lib in libshim_audio.so libshim_beanpod.so libshim_showlogo.so libshim_vtservice.so; do
-            # Try 64-bit first
             if [ -f "$DEST/vendor/lib64/hw/" ] || [ -d "$DEST/vendor/lib64" ]; then
               find "$DEST" -name "$lib" -exec cp {} "$DEST/vendor/lib64/" \; 2>/dev/null || true
             fi
           done
 
-          # Build and install VNDK compat libs (libutils-v32, libui-v32)
-          echo "Setting up VNDK compat libraries..."
-          # Build simple VNDK shims that forward to real libs
           for arch in lib lib64; do
             for lib in utils ui; do
               SHIM_NAME="lib${lib}-v32.so"
@@ -186,27 +165,18 @@ jobs:
                 if [ -f "$p/lib${lib}.so" ]; then REAL_LIB="$p/lib${lib}.so"; break; fi
               done
               if [ -n "$REAL_LIB" ]; then
-                # Create a symlink shim - the v32 version just wraps the real one
                 mkdir -p "$DEST/vendor/$arch"
                 cp "$REAL_LIB" "$DEST/vendor/$arch/$SHIM_NAME" 2>/dev/null || true
-                echo "  [+] $SHIM_NAME from $REAL_LIB"
               fi
             done
           done
-          ls -la "$DEST/vendor/lib64/" 2>/dev/null | head -20
-          echo "Blob patching complete"
 
       - name: Install VINTF manifest to vendor
         working-directory: halium
         run: |
           DEST="vendor/${{ env.VENDOR }}/${{ env.DEVICE }}/proprietary"
-          # Copy device manifest to vendor
           mkdir -p "$DEST/etc/vintf/manifest"
-          cp ${{ github.workspace }}/dts/manifest.xml \
-            "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml"
-          echo "VINTF manifest installed"
-          cat "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml" | head -5
-          echo "... ($(wc -l < "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml") lines)"
+          cp ${{ github.workspace }}/dts/manifest.xml "$DEST/etc/vintf/manifest/manifest_${{ env.DEVICE }}.xml"
 
       - name: Filter proprietary-files.txt to only existing blobs
         working-directory: halium
@@ -228,7 +198,7 @@ jobs:
           done < "$PROP"
           cp "$FILTERED" "$PROP"
           rm "$FILTERED"
-          echo "Filtered: $KEPT kept, $REMOVED removed (not in firmware)"
+          echo "Filtered: $KEPT kept, $REMOVED removed"
 
       - name: Generate vendor makefile from proprietary-files.txt
         working-directory: halium
@@ -257,7 +227,6 @@ jobs:
           gh release download "$TAG" --pattern "Image.gz-dtb" \
             --dir device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/ 2>&1
           ls -la device/${{ env.VENDOR }}/${{ env.DEVICE }}/prebuilt/
-          echo "Prebuilt kernel ready"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -270,8 +239,7 @@ jobs:
 
       - name: Apply Hybris patches
         working-directory: halium
-        run: |
-          ./hybris-patches/apply-patches.sh --mb
+        run: ./hybris-patches/apply-patches.sh --mb
 
       - name: Patch import-namespace to avoid cycle errors
         working-directory: halium
@@ -285,9 +253,8 @@ jobs:
               content = re.sub(r'\$\(error import of "\$\(2\)" failed\)', '', content)
               with open(path, 'w') as f:
                   f.write(content)
-              print('Removed error import line from node_fns.mk')
           except FileNotFoundError:
-              print(f'{path} not found')
+              pass
           PYEOF
 
       - name: Fix Soong Make variables
@@ -301,37 +268,25 @@ jobs:
           with open(path) as f:
               c = f.read()
           c2 = re.sub(r'\$\([A-Z_]+\)', '', c)
-          if c2 != c:
-              print('Cleaned Make vars from Soong Android.bp')
           with open(path, 'w') as f:
               f.write(c2)
-          print('Done')
           PYEOF
-          else
-            echo "$SOONG_BP not found, skipping"
           fi
 
       - name: Clone and patch halium-boot repo
         working-directory: halium
         run: |
           git clone --depth=1 https://github.com/Halium/halium-boot.git vendor/halium/halium-boot
-          echo "halium-boot cloned"
 
       - name: Allow disallowed build tools (mkbootimg)
         working-directory: halium
         run: |
           CONFIG="build/soong/ui/build/paths/config.go"
           if [ -f "$CONFIG" ]; then
-            grep -c "mkbootimg" "$CONFIG" && echo "mkbootimg already in config" && exit 0
-            # Dump first 20 lines to understand format
-            head -30 "$CONFIG"
-            # Try adding mkbootimg after any existing tool entry
+            grep -c "mkbootimg" "$CONFIG" && exit 0
             sed -i '/"mke2fs"/a\        "mkbootimg",' "$CONFIG" 2>/dev/null || \
             sed -i '/mke2fs/a\        mkbootimg,' "$CONFIG" 2>/dev/null || \
             echo "sed failed, will use manual build fallback"
-            grep -c "mkbootimg" "$CONFIG" && echo "SUCCESS: mkbootimg added" || echo "WILL_USE_MANUAL_BUILD"
-          else
-            echo "config.go not found, will use manual build fallback"
           fi
 
       - name: Remove broken platform_testing test files
@@ -340,7 +295,6 @@ jobs:
           rm -f platform_testing/build/tasks/tests/instrumentation_test_list.mk
           rm -f platform_testing/build/tasks/continuous_instrumentation_tests.mk
           rm -f platform_testing/build/tasks/continuous_native_tests.mk
-          echo "Removed broken test task files"
 
       - name: Fix bootloader_message offset for no-recovery builds
         working-directory: halium
@@ -354,9 +308,6 @@ jobs:
               content = '#ifndef BOARD_RECOVERY_BLDRMSG_OFFSET\n#define BOARD_RECOVERY_BLDRMSG_OFFSET 0x00000000\n#endif\n\n' + content
               with open('$HEADER', 'w') as f:
                   f.write(content)
-              print('Patched bootloader_message.h with default BOARD_RECOVERY_BLDRMSG_OFFSET')
-          else:
-              print('No patch needed')
           "
 
       - name: Setup build environment
@@ -372,7 +323,6 @@ jobs:
           INITRD_CACHE="vendor/halium/halium-boot/initrd-cache.img"
           mkdir -p "$(dirname "$INITRD_CACHE")"
           curl --location "$INITRD_URL" --output "$INITRD_CACHE" --silent
-          ls -lh "$INITRD_CACHE"
           printf '#!/bin/bash\nARCH=$1\nTARGET=$2\ncp "$(dirname "$0")/initrd-cache.img" "$TARGET"\necho "Using cached initramfs"\n' \
             > vendor/halium/halium-boot/get-initrd.sh
           chmod +x vendor/halium/halium-boot/get-initrd.sh
@@ -386,197 +336,51 @@ jobs:
           export CCACHE_DIR=~/.ccache
           export USE_HOST_LEX=yes
           mka mkbootimg
-          # Try ninja halium-boot; if mkbootimg disallowed, build manually
-          mka halium-boot -j$(nproc --all) 2>&1 | tee /tmp/build-boot.log && exit 0
-          echo "ninja halium-boot failed, building manually..."
-          cat /tmp/build-boot.log | tail -20
-          MKBOOTIMG="$(pwd)/out/host/linux-x86/bin/mkbootimg"
-          KERNEL="$(pwd)/out/target/product/${{ env.DEVICE }}/kernel"
-          INITRD="$(pwd)/out/target/product/${{ env.DEVICE }}/obj/ROOT/halium-boot_intermediates/halium-initramfs.gz"
-          OUTPUT="$(pwd)/out/target/product/${{ env.DEVICE }}/halium-boot.img"
-          DTB="$(pwd)/out/target/product/${{ env.DEVICE }}/dtb"
-          if [ ! -f "$MKBOOTIMG" ]; then echo "mkbootimg not found at $MKBOOTIMG"; exit 1; fi
-          if [ ! -f "$KERNEL" ]; then echo "kernel not found at $KERNEL"; exit 1; fi
-          if [ ! -f "$INITRD" ]; then echo "initrd not found at $INITRD"; exit 1; fi
-          ORIG_KERNEL="$KERNEL"
-          cp "$ORIG_KERNEL" /tmp/kernel_src.gz-dtb
-          python3 -c "
-          import sys
-          with open(sys.argv[1], 'rb') as f:
-              data = f.read()
-          dtb_magic = b'\xd0\x0d\xfe\xed'
-          idx = data.find(dtb_magic)
-          if idx < 0:
-              print('ERROR: DTB magic not found in kernel image')
-              sys.exit(1)
-          with open(sys.argv[2], 'wb') as f:
-              f.write(data[:idx])
-          with open(sys.argv[3], 'wb') as f:
-              f.write(data[idx:])
-          print(f'Split OK: kernel={idx} bytes, dtb={len(data)-idx} bytes')
-          " /tmp/kernel_src.gz-dtb "$KERNEL" "$DTB"
-          echo "Using extracted kernel=$KERNEL dtb=$DTB"
-          "$MKBOOTIMG" \
-            --kernel "$KERNEL" \
-            --ramdisk "$INITRD" \
-            --dtb "$DTB" \
-            --base 0x40000000 \
-            --pagesize 2048 \
-            --cmdline "androidboot.hardware=selene androidboot.bootdevice=mtk-msdc.0 bootopt=64S3,32N2,64N2 console=tty0 androidboot.selinux=permissive buildvariant=userdebug printk.devkmsg=on" \
-            --kernel_offset 0x00008000 \
-            --ramdisk_offset 0x07c80000 \
-            --tags_offset 0x0bc80000 \
-            --header_version 2 \
-            --output "$OUTPUT"
-          ls -la "$OUTPUT"
-
-      - name: Free disk before systemimage
-        working-directory: halium
-        run: |
-          rm -f /tmp/vendor_a.img 2>/dev/null || true
-          rm -f /tmp/vendor_mnt 2>/dev/null || true
-          rm -rf vendor/halium/halium-boot 2>/dev/null || true
-          rm -rf out/target/product/${{ env.DEVICE }}/obj/ROOT/halium-boot_intermediates 2>/dev/null || true
-          rm -rf out/target/product/${{ env.DEVICE }}/obj/EMBEDDED_INITRAMFS 2>/dev/null || true
-          ccache --show-stats
-          df -h
-
-      - name: Build system image
-        working-directory: halium
-        run: |
-          df -h
-          source build/envsetup.sh
-          lunch ${{ env.LUNCH_COMBO }}
-          export USE_CCACHE=1
-          export CCACHE_DIR=~/.ccache
-          export USE_HOST_LEX=yes
-          mka systemimage -j$(nproc --all) 2>&1 | tee /tmp/build-system.log; exit ${PIPESTATUS[0]}
-
-      - name: Upload build logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: halium-${{ env.DEVICE }}-logs-${{ github.run_number }}
-          path: |
-            /tmp/build-system.log
-            /tmp/build-boot.log
-          retention-days: 7
-          if-no-files-found: ignore
+          mka halium-boot -j$(nproc --all)
 
       - name: Collect output
         working-directory: halium
         run: |
           mkdir -p ../out
-          cp out/target/product/${{ env.DEVICE }}/halium-boot.img ../out/ 2>/dev/null || true
-          cp out/target/product/${{ env.DEVICE }}/system.img ../out/ 2>/dev/null || true
+          cp out/target/product/${{ env.DEVICE }}/halium-boot.img ../out/
           ls -la ../out/
 
-      - name: Upload artifacts
+      - name: Upload halium-boot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: halium-${{ env.DEVICE }}-${{ github.run_number }}
-          path: out/
-          retention-days: 30
+          name: halium-boot-${{ env.DEVICE }}-${{ github.run_number }}
+          path: out/halium-boot.img
+          retention-days: 7
 
-      - name: Create release
-        if: success()
-        shell: bash
-        working-directory: halium
-        run: |
-          TAG="successful.release.selene.halium11.${{ github.run_number }}"
-          for i in 1 2 3 4 5; do
-            echo "Attempt $i to create release..."
-            gh release delete "$TAG" --repo ${{ github.repository }} --yes --cleanup-tag 2>/dev/null || true
-            sleep 5
-            gh release create "$TAG" \
-              --repo ${{ github.repository }} \
-              --title "Halium 11 ${{ env.DEVICE }} #${{ github.run_number }}" \
-              ../out/* \
-              --latest && echo "Release created!" && exit 0
-            echo "Attempt $i failed, waiting 30s..."
-            sleep 30
-          done
-          echo "All release attempts failed"
-          exit 1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: halium-boot-logs-${{ env.DEVICE }}-${{ github.run_number }}
+          path: /tmp/build-boot.log
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Notify Telegram on success
         if: success()
         shell: bash
         run: |
-          esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
           CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
           BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
           RUN="${{ github.run_number }}"
           RUN_ID="${{ github.run_id }}"
           REPO="${{ github.repository }}"
-          ACTOR="${{ github.actor }}"
-          REF="${{ github.ref_name }}"
-          SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
-          COMMIT_MSG=$(git log -1 --format=%s 2>/dev/null | esc || echo "N/A")
-          printf -v MSG '%s\n' \
-            "✅ <b>Halium 11 Build for Selene #$RUN SUCCEEDED</b>" \
-            "" \
-            "<b>Device:</b> Xiaomi Redmi 10 2022 (selene)" \
-            "<b>SoC:</b> MediaTek MT6768 (Helio G88)" \
-            "<b>Halium version:</b> 11.0 (Android 11/R)" \
-            "<b>Kernel:</b> prebuilt Image.gz-dtb (from semirelease)" \
-            "<b>Vendor:</b> curated proprietary-files.txt (~600 blobs)" \
-            "" \
-            "<b>Release tag:</b> successful.release.selene.halium11.$RUN" \
-            "" \
-            "<b>Commit:</b> <code>$SHA_SHORT</code> $COMMIT_MSG" \
-            "<b>Triggered by:</b> $ACTOR on $REF" \
-            "" \
-            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">View run</a>"
-          jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
-            '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
-            > /tmp/tg.json
           curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
-            -H "Content-Type: application/json" -d @/tmp/tg.json
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\":\"$CHAT\",\"text\":\"GLUE-HBOOT #$RUN OK\",\"parse_mode\":\"HTML\"}"
 
       - name: Notify Telegram on failure
         if: failure()
         shell: bash
         run: |
-          esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
           CHAT="${{ secrets.TELEGRAM_CHAT_ID }}"
           BOT="${{ secrets.TELEGRAM_BOT_TOKEN }}"
           RUN="${{ github.run_number }}"
-          RUN_ID="${{ github.run_id }}"
-          REPO="${{ github.repository }}"
-          ACTOR="${{ github.actor }}"
-          REF="${{ github.ref_name }}"
-          SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
-          COMMIT_MSG=$(git log -1 --format=%s 2>/dev/null | esc || echo "N/A")
-
-          # Extract error from build log
-          ERRORS=""
-          for LOGFILE in /tmp/build-system.log /tmp/build-boot.log; do
-            if [ -f "$LOGFILE" ]; then
-              FOUND=$(grep -E "FAILED:|error:" "$LOGFILE" 2>/dev/null | tail -10 | esc)
-              if [ -n "$FOUND" ]; then
-                ERRORS="$FOUND"
-                break
-              fi
-            fi
-          done
-          if [ -z "$ERRORS" ]; then
-            ERRORS="Check the run log for details."
-          fi
-
-          printf -v MSG '%s\n' \
-            "❌ <b>Halium 11 Build #$RUN FAILED</b>" \
-            "" \
-            "<b>Commit:</b> <code>$SHA_SHORT</code> $COMMIT_MSG" \
-            "" \
-            "<b>Error:</b>" \
-            "<code>$ERRORS</code>" \
-            "" \
-            "<a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">View run</a>"
-          jq -n --arg chat_id "$CHAT" --arg text "$MSG" \
-            '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
-            > /tmp/tg.json
           curl -s -X POST "https://api.telegram.org/bot$BOT/sendMessage" \
-            -H "Content-Type: application/json" -d @/tmp/tg.json
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\":\"$CHAT\",\"text\":\"GLUE-HBOOT #$RUN FAILED\",\"parse_mode\":\"HTML\"}"
