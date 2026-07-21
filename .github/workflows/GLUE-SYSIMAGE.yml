@@ -328,14 +328,25 @@ jobs:
           CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
           CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
 
+      - name: Get GitHub runner registration token
+        id: runner-token
+        run: |
+          TOKEN=$(gh api --method POST /repos/${{ github.repository }}/actions/runners/registration-token --jq .token)
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Crave devspace runner
         run: |
           crave ${{ secrets.CRAVE_FLAGS }} devspace -- "
-            if [ -f actions-runner/run.sh ]; then
-              echo 'Runner found! Restarting...'
+            if [ ! -f actions-runner/run.sh ]; then
+              echo 'Runner not found. Setting up...'
+              rm -rf actions-runner || true
+              curl -s https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/scripts/runner-setup.sh | bash
+              cd actions-runner
+              ./config.sh --unattended --url 'https://github.com/${{ github.repository }}' --token '${{ steps.runner-token.outputs.token }}'
             else
-              echo 'Error: Runner not found! Run Configure Crave Runner first.'
-              exit 1
+              echo 'Runner found. Restarting...'
             fi
             if tmux has-session -t ghactions; then
               echo 'Runner already running'
