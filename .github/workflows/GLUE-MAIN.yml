@@ -226,21 +226,25 @@ jobs:
         run: |
           CONFIG="build/soong/ui/build/paths/config.go"
           if [ -f "$CONFIG" ]; then
-            python3 -c "
-          import sys
-          with open('$CONFIG') as f: c = f.read()
-          if '\"mkbootimg\"' in c and 'mkbootimg\": true' in c:
-              print('mkbootimg already allowed'); sys.exit(0)
-          if '\"mke2fs\": true,' in c:
-              c = c.replace('\"mke2fs\": true,', '\"mke2fs\": true,\n\t\t\"mkbootimg\": true,')
-          elif '\"mke2fs\"' in c:
-              c = c.replace('\"mke2fs\",', '\"mke2fs\",\n\t\t\"mkbootimg\": true,')
-          else:
-              # Fallback: insert after first true,
-              c = c.replace('true,\n', 'true,\n\t\t\"mkbootimg\": true,\n', 1)
-          with open('$CONFIG', 'w') as f: f.write(c)
-          print('mkbootimg added to allowlist')
-          "
+            python3 << 'PYEOF'
+          import re, sys
+          config = "build/soong/ui/build/paths/config.go"
+          with open(config) as f: c = f.read()
+          if '"mkbootimg"' in c and 'Allowed' in c.split('"mkbootimg"')[1][:30]:
+              print("mkbootimg already in allowlist"); sys.exit(0)
+          nc = re.sub(r'("zip"\s*:\s*Allowed,)', r'\1\n\t\t"mkbootimg": Allowed,', c, count=1)
+          if nc != c:
+              with open(config, 'w') as f: f.write(nc)
+              print("Added mkbootimg to Configuration map (PathConfig format)")
+              sys.exit(0)
+          nc = re.sub(r'("zip"\s*:\s*true,)', r'\1\n\t\t"mkbootimg": true,', c, count=1)
+          if nc != c:
+              with open(config, 'w') as f: f.write(nc)
+              print("Added mkbootimg to Configuration map (bool format)")
+              sys.exit(0)
+          print("ERROR: Could not find 'zip' entry in config.go")
+          sys.exit(1)
+          PYEOF
           fi
 
       - name: Remove broken test files
