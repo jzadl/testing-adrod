@@ -226,8 +226,21 @@ jobs:
         run: |
           CONFIG="build/soong/ui/build/paths/config.go"
           if [ -f "$CONFIG" ]; then
-            grep -c "mkbootimg" "$CONFIG" && exit 0
-            sed -i '/"mke2fs"/a\        "mkbootimg",' "$CONFIG" 2>/dev/null || true
+            python3 -c "
+          import sys
+          with open('$CONFIG') as f: c = f.read()
+          if '\"mkbootimg\"' in c and 'mkbootimg\": true' in c:
+              print('mkbootimg already allowed'); sys.exit(0)
+          if '\"mke2fs\": true,' in c:
+              c = c.replace('\"mke2fs\": true,', '\"mke2fs\": true,\n\t\t\"mkbootimg\": true,')
+          elif '\"mke2fs\"' in c:
+              c = c.replace('\"mke2fs\",', '\"mke2fs\",\n\t\t\"mkbootimg\": true,')
+          else:
+              # Fallback: insert after first true,
+              c = c.replace('true,\n', 'true,\n\t\t\"mkbootimg\": true,\n', 1)
+          with open('$CONFIG', 'w') as f: f.write(c)
+          print('mkbootimg added to allowlist')
+          "
           fi
 
       - name: Remove broken test files
