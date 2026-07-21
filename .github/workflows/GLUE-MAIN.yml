@@ -198,10 +198,9 @@ jobs:
         working-directory: halium
         run: |
           python3 - << 'PYEOF'
-          import re
           try:
               with open('build/core/node_fns.mk', 'r') as f: content = f.read()
-              content = re.sub(r'\$\(error import of "\$\(2\)" failed\)', '', content)
+              content = content.replace('$(error import of "$(2)" failed)', '')
               with open('build/core/node_fns.mk', 'w') as f: f.write(content)
           except FileNotFoundError: pass
           PYEOF
@@ -211,11 +210,11 @@ jobs:
         run: |
           if [ -f "vendor/lineage/build/soong/Android.bp" ]; then
             python3 - << 'PYEOF'
-            import re
-            with open('vendor/lineage/build/soong/Android.bp') as f: c = f.read()
-            c2 = re.sub(r'\$\([A-Z_]+\)', '', c)
-            with open('vendor/lineage/build/soong/Android.bp', 'w') as f: f.write(c2)
-            PYEOF
+          import re
+          with open('vendor/lineage/build/soong/Android.bp') as f: c = f.read()
+          c2 = re.sub(r'\$\([A-Z_]+\)', '', c)
+          with open('vendor/lineage/build/soong/Android.bp', 'w') as f: f.write(c2)
+          PYEOF
           fi
 
       - name: Clone halium-boot repo
